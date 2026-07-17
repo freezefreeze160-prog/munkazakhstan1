@@ -286,6 +286,12 @@ export const translations = {
     current_deputy: "Текущий ответственный",
     pending_conference_requests: "Конференции ожидают одобрения",
 
+    // Map
+    map_title: "Карта конференций",
+    map_desc: "MUN-конференции по городам Казахстана. Нажмите на маркер, чтобы посмотреть события.",
+    map_nav: "Карта",
+    conferences_count_label: "конференций",
+
     // Documents
     documents: "Документы",
     background_guides: "Background Guides",
@@ -622,6 +628,12 @@ export const translations = {
     current_deputy: "Қазіргі жауапты",
     pending_conference_requests: "Конференциялар мақұлдауды күтуде",
 
+    // Map
+    map_title: "Конференциялар картасы",
+    map_desc: "Қазақстан қалалары бойынша MUN-конференциялар. Оқиғаларды көру үшін маркерді басыңыз.",
+    map_nav: "Карта",
+    conferences_count_label: "конференция",
+
     // Documents
     documents: "Құжаттар",
     background_guides: "Background Guides",
@@ -956,6 +968,12 @@ export const translations = {
     deputy_assigned: "Responsible assigned!",
     current_deputy: "Current responsible",
     pending_conference_requests: "Conferences pending approval",
+
+    // Map
+    map_title: "Conferences Map",
+    map_desc: "MUN conferences across Kazakhstan by city. Click a marker to see events.",
+    map_nav: "Map",
+    conferences_count_label: "conferences",
 
     // Documents
     documents: "Documents",
