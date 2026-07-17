@@ -382,7 +382,7 @@ export default function InboxPage() {
               html: `<div style="font-family:Arial,sans-serif;font-size:15px;color:#111">
                 <p>${app.full_name || ""},</p>
                 <p>${emailBody}</p>
-                <p style="color:#006633;font-weight:bold">${confName}</p>
+                <p style="color:#2563eb;font-weight:bold">${confName}</p>
                 <hr style="border:none;border-top:1px solid #eee"/>
                 <p style="color:#888;font-size:13px">MUN Kazakhstan</p>
               </div>`,

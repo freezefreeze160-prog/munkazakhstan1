@@ -198,7 +198,7 @@ export default function CreateNewsPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button type="submit" disabled={isSubmitting} className="bg-[#006633] hover:bg-[#004d26]">
+                  <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
                     {isSubmitting ? t("saving") : t("create")}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => router.back()}>

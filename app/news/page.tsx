@@ -104,7 +104,7 @@ export default function NewsPage() {
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-4xl font-bold text-foreground">{t("news_title")}</h1>
             {canManageNews && tableExists && (
-              <Button asChild className="bg-[#006633] hover:bg-[#004d26]">
+              <Button asChild className="bg-primary hover:bg-primary/90">
                 <Link href="/news/create">
                   <Plus className="mr-2 h-4 w-4" />
                   {t("create_news")}

@@ -264,7 +264,7 @@ export function ConferenceCertificate({
       {!isOrganizer && (
         <>
           {templateUrl && myName ? (
-            <Button onClick={downloadCertificate} className="bg-[#006633] hover:bg-[#004d26]">
+            <Button onClick={downloadCertificate} className="bg-primary hover:bg-primary/90">
               <Download className="w-4 h-4 mr-2" />
               {t("download_certificate")}
             </Button>
@@ -357,7 +357,7 @@ export function ConferenceCertificate({
                 />
               </div>
 
-              <Button onClick={saveConfig} disabled={saving} className="bg-[#006633] hover:bg-[#004d26]">
+              <Button onClick={saveConfig} disabled={saving} className="bg-primary hover:bg-primary/90">
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? t("saving") : t("save")}
               </Button>
