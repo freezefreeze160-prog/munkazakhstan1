@@ -343,14 +343,53 @@ export default function InboxPage() {
     }
   }
 
-  async function updateApplicationStatus(applicationId: string, status: string) {
+  async function updateApplicationStatus(
+    app: DelegateApplication,
+    conf: ConferenceWithApplications,
+    status: string,
+  ) {
     try {
       const { error } = await supabase
         .from("delegate_applications")
         .update({ status })
-        .eq("id", applicationId)
+        .eq("id", app.id)
 
       if (error) throw error
+
+      // Notify the delegate (in-app + best-effort email) on approve/reject
+      if ((status === "approved" || status === "rejected") && app.user_id) {
+        const confName = getConferenceName(conf)
+        const title = status === "approved" ? t("notif_approved_title") : t("notif_rejected_title")
+        const emailBody = status === "approved" ? t("email_approved_body") : t("email_rejected_body")
+
+        // In-app notification (works immediately, no external service)
+        await supabase.from("notifications").insert({
+          user_id: app.user_id,
+          type: "application_status",
+          title,
+          body: confName,
+          data: { conference_id: conf.id, status },
+        })
+
+        // Email (silently skipped if email isn't configured yet)
+        if (app.email) {
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: app.email,
+              subject: `${title} — ${confName}`,
+              html: `<div style="font-family:Arial,sans-serif;font-size:15px;color:#111">
+                <p>${app.full_name || ""},</p>
+                <p>${emailBody}</p>
+                <p style="color:#006633;font-weight:bold">${confName}</p>
+                <hr style="border:none;border-top:1px solid #eee"/>
+                <p style="color:#888;font-size:13px">MUN Kazakhstan</p>
+              </div>`,
+            }),
+          }).catch(() => {})
+        }
+      }
 
       alert(t("status_updated"))
       await loadApplications()
@@ -381,6 +420,16 @@ export default function InboxPage() {
           { onConflict: "conference_id,user_id" },
         )
         if (error) throw error
+
+        // Notify the delegate about their award
+        const conf = conferences.find((c) => c.id === conferenceId)
+        await supabase.from("notifications").insert({
+          user_id: delegateUserId,
+          type: "award",
+          title: t("notif_award_title"),
+          body: `${t(awardLabelKey(awardType as AwardType) as never)}${conf ? " — " + getConferenceName(conf) : ""}`,
+          data: { conference_id: conferenceId, award_type: awardType },
+        })
       }
       alert(t("award_assigned"))
       await loadApplications()
@@ -896,7 +945,7 @@ export default function InboxPage() {
                                       <>
                                         <Button
                                           size="sm"
-                                          onClick={() => updateApplicationStatus(app.id, "approved")}
+                                          onClick={() => updateApplicationStatus(app, conf, "approved")}
                                           className="bg-green-600 hover:bg-green-700"
                                         >
                                           <CheckCircle className="h-4 w-4 mr-1" />
@@ -905,7 +954,7 @@ export default function InboxPage() {
                                         <Button
                                           size="sm"
                                           variant="destructive"
-                                          onClick={() => updateApplicationStatus(app.id, "rejected")}
+                                          onClick={() => updateApplicationStatus(app, conf, "rejected")}
                                         >
                                           <XCircle className="h-4 w-4 mr-1" />
                                           {t("reject")}

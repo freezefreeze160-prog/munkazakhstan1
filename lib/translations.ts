@@ -417,6 +417,13 @@ export const translations = {
     level_silver_desc: "3-5 конференций",
     level_gold_desc: "6+ конференций",
 
+    // Notification content
+    notif_approved_title: "Заявка одобрена ✅",
+    notif_rejected_title: "Заявка отклонена",
+    notif_award_title: "Вы получили награду! 🏅",
+    email_approved_body: "Ваша заявка на конференцию одобрена. Поздравляем! Подробности — на странице конференции.",
+    email_rejected_body: "К сожалению, ваша заявка на конференцию отклонена. Не расстраивайтесь — впереди новые конференции!",
+
     // Notifications
     notifications: "Уведомления",
     mark_all_read: "Прочитать все",
@@ -839,6 +846,13 @@ export const translations = {
     level_silver_desc: "3-5 конференция",
     level_gold_desc: "6+ конференция",
 
+    // Notification content
+    notif_approved_title: "Өтінім мақұлданды ✅",
+    notif_rejected_title: "Өтінім қабылданбады",
+    notif_award_title: "Сіз марапат алдыңыз! 🏅",
+    email_approved_body: "Конференцияға өтініміңіз мақұлданды. Құттықтаймыз! Толығырақ — конференция бетінде.",
+    email_rejected_body: "Өкінішке орай, конференцияға өтініміңіз қабылданбады. Алда жаңа конференциялар бар!",
+
     // Notifications
     notifications: "Хабарландырулар",
     mark_all_read: "Барлығын оқылды деп белгілеу",
@@ -1259,6 +1273,13 @@ export const translations = {
     level_bronze_desc: "1-2 conferences",
     level_silver_desc: "3-5 conferences",
     level_gold_desc: "6+ conferences",
+
+    // Notification content
+    notif_approved_title: "Application approved ✅",
+    notif_rejected_title: "Application rejected",
+    notif_award_title: "You received an award! 🏅",
+    email_approved_body: "Your conference application has been approved. Congratulations! See the conference page for details.",
+    email_rejected_body: "Unfortunately, your conference application was not accepted this time. Don't worry — more conferences are coming!",
 
     // Notifications
     notifications: "Notifications",
