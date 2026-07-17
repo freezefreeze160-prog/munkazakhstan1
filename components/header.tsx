@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
 import { useTheme } from "@/contexts/theme-context"
 import { Button } from "@/components/ui/button"
-import { User, Search, Shield, Moon, Sun, Inbox, Trophy, ChevronDown, Users, Newspaper, Info, MapPin } from "lucide-react"
+import { User, Search, Shield, Moon, Sun, Inbox, Trophy, ChevronDown, Users, Newspaper, Info, MapPin, GraduationCap } from "lucide-react"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -162,6 +162,9 @@ export function Header() {
               <DropdownItem href="/hall-of-fame" icon={<Trophy className="w-4 h-4" />}>
                 {t("hall_of_fame")}
               </DropdownItem>
+              <DropdownItem href="/resources" icon={<GraduationCap className="w-4 h-4" />}>
+                {t("resources_nav")}
+              </DropdownItem>
               <DropdownItem href="/search" icon={<Search className="w-4 h-4" />}>
                 {t("search_users")}
               </DropdownItem>
@@ -261,6 +264,10 @@ export function Header() {
           <Link href="/map" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
             <MapPin className="w-4 h-4 inline mr-1" />
             {t("map_nav")}
+          </Link>
+          <Link href="/resources" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
+            <GraduationCap className="w-4 h-4 inline mr-1" />
+            {t("resources_nav")}
           </Link>
           {user ? (
             <>

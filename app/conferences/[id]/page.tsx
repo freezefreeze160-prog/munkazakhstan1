@@ -11,6 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText } from "lucide-react"
 import { ConferenceDocuments } from "@/components/conference-documents"
+import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
+import { ConferenceGallery } from "@/components/conference-gallery"
+import { ConferenceCertificate } from "@/components/conference-certificate"
 
 interface Conference {
   id: string
@@ -198,6 +201,12 @@ export default function ConferenceDetailPage() {
                 <ConferenceDocuments conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
               </div>
 
+              {/* Photo gallery */}
+              <ConferenceGallery conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
+
+              {/* Certificates */}
+              <ConferenceCertificate conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
+
               {/* Payment Details */}
               {(conference.payment_bank || conference.payment_card_number) && (
                 <div className="border rounded-lg p-5 bg-muted/30">
@@ -244,6 +253,9 @@ export default function ConferenceDetailPage() {
                       </p>
                     </div>
                   )}
+
+                  {/* Delegate uploads a payment receipt here */}
+                  {userId && <PaymentReceiptUpload conferenceId={conference.id} userId={userId} />}
                 </div>
               )}
 

@@ -9,8 +9,9 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck } from "lucide-react"
+import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock, Download, Award } from "lucide-react"
 import Link from "next/link"
+import { AWARD_TYPES, awardLabelKey, type AwardType } from "@/lib/awards"
 
 interface DelegateApplication {
   id: string
@@ -44,6 +45,22 @@ interface Committee {
   countries: string[]
 }
 
+interface PaymentReceipt {
+  id: string
+  conference_id: string
+  user_id: string
+  receipt_url: string
+  full_name: string | null
+  status: "submitted" | "confirmed" | "rejected"
+  created_at: string
+}
+
+interface ConferenceAward {
+  id: string
+  user_id: string
+  award_type: string
+}
+
 interface ConferenceWithApplications {
   id: string
   name_ru: string
@@ -54,6 +71,8 @@ interface ConferenceWithApplications {
   date_en: string
   applications: DelegateApplication[]
   committees: Committee[]
+  receipts: PaymentReceipt[]
+  awards: ConferenceAward[]
   status: string
   location: string
   registration_fee_amount: number | null
@@ -188,10 +207,23 @@ export default function InboxPage() {
 
             if (appsError) console.log("[v0] Apps load error:", appsError)
 
+            const { data: receipts } = await supabase
+              .from("payment_receipts")
+              .select("*")
+              .eq("conference_id", conf.id)
+              .order("created_at", { ascending: false })
+
+            const { data: awards } = await supabase
+              .from("conference_awards")
+              .select("id, user_id, award_type")
+              .eq("conference_id", conf.id)
+
             return {
               ...conf,
               applications: apps || [],
               committees: committeesData || [],
+              receipts: receipts || [],
+              awards: awards || [],
             }
           }),
         )
@@ -311,19 +343,118 @@ export default function InboxPage() {
     }
   }
 
-  async function updateApplicationStatus(applicationId: string, status: string) {
+  async function updateApplicationStatus(
+    app: DelegateApplication,
+    conf: ConferenceWithApplications,
+    status: string,
+  ) {
     try {
       const { error } = await supabase
         .from("delegate_applications")
         .update({ status })
-        .eq("id", applicationId)
+        .eq("id", app.id)
 
       if (error) throw error
+
+      // Notify the delegate (in-app + best-effort email) on approve/reject
+      if ((status === "approved" || status === "rejected") && app.user_id) {
+        const confName = getConferenceName(conf)
+        const title = status === "approved" ? t("notif_approved_title") : t("notif_rejected_title")
+        const emailBody = status === "approved" ? t("email_approved_body") : t("email_rejected_body")
+
+        // In-app notification (works immediately, no external service)
+        await supabase.from("notifications").insert({
+          user_id: app.user_id,
+          type: "application_status",
+          title,
+          body: confName,
+          data: { conference_id: conf.id, status },
+        })
+
+        // Email (silently skipped if email isn't configured yet)
+        if (app.email) {
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: app.email,
+              subject: `${title} — ${confName}`,
+              html: `<div style="font-family:Arial,sans-serif;font-size:15px;color:#111">
+                <p>${app.full_name || ""},</p>
+                <p>${emailBody}</p>
+                <p style="color:#006633;font-weight:bold">${confName}</p>
+                <hr style="border:none;border-top:1px solid #eee"/>
+                <p style="color:#888;font-size:13px">MUN Kazakhstan</p>
+              </div>`,
+            }),
+          }).catch(() => {})
+        }
+      }
 
       alert(t("status_updated"))
       await loadApplications()
     } catch (error) {
       console.error("[v0] Error updating application status:", error)
+      alert("Error: " + (error as Error).message)
+    }
+  }
+
+  async function assignAward(conferenceId: string, delegateUserId: string, awardType: string) {
+    try {
+      if (!awardType) {
+        // Remove any existing award for this delegate
+        const { error } = await supabase
+          .from("conference_awards")
+          .delete()
+          .eq("conference_id", conferenceId)
+          .eq("user_id", delegateUserId)
+        if (error) throw error
+      } else {
+        const { error } = await supabase.from("conference_awards").upsert(
+          {
+            conference_id: conferenceId,
+            user_id: delegateUserId,
+            award_type: awardType,
+            created_by: userId,
+          },
+          { onConflict: "conference_id,user_id" },
+        )
+        if (error) throw error
+
+        // Notify the delegate about their award
+        const conf = conferences.find((c) => c.id === conferenceId)
+        await supabase.from("notifications").insert({
+          user_id: delegateUserId,
+          type: "award",
+          title: t("notif_award_title"),
+          body: `${t(awardLabelKey(awardType as AwardType) as never)}${conf ? " — " + getConferenceName(conf) : ""}`,
+          data: { conference_id: conferenceId, award_type: awardType },
+        })
+      }
+      alert(t("award_assigned"))
+      await loadApplications()
+    } catch (error) {
+      console.error("[v0] Error assigning award:", error)
+      alert("Error: " + (error as Error).message)
+    }
+  }
+
+  async function updatePaymentStatus(receiptId: string, status: "confirmed" | "rejected") {
+    try {
+      const { error } = await supabase
+        .from("payment_receipts")
+        .update({
+          status,
+          confirmed_by: userId,
+          confirmed_at: new Date().toISOString(),
+        })
+        .eq("id", receiptId)
+
+      if (error) throw error
+      alert(status === "confirmed" ? t("payment_confirmed_toast") : t("payment_rejected_toast"))
+      await loadApplications()
+    } catch (error) {
+      console.error("[v0] Error updating payment status:", error)
       alert("Error: " + (error as Error).message)
     }
   }
@@ -366,6 +497,60 @@ export default function InboxPage() {
       console.error("[v0] Error rejecting conference:", error)
       alert("Error: " + (error as Error).message)
     }
+  }
+
+  function exportApplicationsCsv(conf: ConferenceWithApplications) {
+    if (conf.applications.length === 0) {
+      alert(t("export_no_data"))
+      return
+    }
+    const committeeName = (id: string | null) =>
+      conf.committees.find((c) => c.id === id)?.name || ""
+    const headers = [
+      t("full_name"),
+      t("email"),
+      t("phone"),
+      t("status"),
+      t("primary_choice"),
+      t("secondary_choice"),
+      t("tertiary_choice"),
+      t("assigned_committee"),
+      t("assigned_country"),
+      t("motivation"),
+      t("submitted_on"),
+    ]
+    const escape = (val: unknown) => {
+      const s = String(val ?? "")
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const rows = conf.applications.map((app) =>
+      [
+        app.full_name,
+        app.email,
+        app.phone,
+        t(app.status as never) || app.status,
+        committeeName(app.primary_committee_id),
+        committeeName(app.secondary_committee_id),
+        committeeName(app.third_committee_id),
+        committeeName(app.assigned_committee_id),
+        app.assigned_country || "",
+        app.motivation || "",
+        app.created_at ? new Date(app.created_at).toLocaleDateString() : "",
+      ]
+        .map(escape)
+        .join(","),
+    )
+    const csv = "﻿" + [headers.map(escape).join(","), ...rows].join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    const safeName = getConferenceName(conf).replace(/[^a-zA-Z0-9а-яА-Я_-]+/g, "_")
+    link.download = `${safeName || "applications"}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   function getConferenceName(conf: ConferenceWithApplications) {
@@ -530,14 +715,24 @@ export default function InboxPage() {
                 .map((conf) => (
                   <Card key={conf.id}>
                     <CardHeader>
-                      <CardTitle className="text-2xl">{getConferenceName(conf)}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        {getConferenceDate(conf)}
-                        <span className="ml-2">
-                          • {conf.applications.length} {t("applications")}
-                        </span>
-                      </CardDescription>
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <div>
+                          <CardTitle className="text-2xl">{getConferenceName(conf)}</CardTitle>
+                          <CardDescription className="flex items-center gap-2 mt-1">
+                            <Calendar className="w-4 h-4" />
+                            {getConferenceDate(conf)}
+                            <span className="ml-2">
+                              • {conf.applications.length} {t("applications")}
+                            </span>
+                          </CardDescription>
+                        </div>
+                        {conf.applications.length > 0 && (
+                          <Button size="sm" variant="outline" onClick={() => exportApplicationsCsv(conf)}>
+                            <Download className="w-4 h-4 mr-2" />
+                            {t("export_csv")}
+                          </Button>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       {conf.committees.length > 0 && (
@@ -591,6 +786,77 @@ export default function InboxPage() {
                               {t("current_deputy")}: {eligibleUsers.find((u) => u.user_id === conf.assigned_deputy_id)?.full_name || conf.assigned_deputy_id}
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {/* Payment receipts */}
+                      {conf.receipts && conf.receipts.length > 0 && (
+                        <div className="mb-6 p-4 border rounded-lg">
+                          <h4 className="font-semibold flex items-center gap-2 mb-3">
+                            <CreditCard className="w-4 h-4" />
+                            {t("payment_receipts_inbox")}
+                            <span className="text-sm font-normal text-muted-foreground">
+                              ({conf.receipts.length})
+                            </span>
+                          </h4>
+                          <div className="space-y-2">
+                            {conf.receipts.map((receipt) => (
+                              <div
+                                key={receipt.id}
+                                className="flex items-center gap-3 p-3 rounded-lg border bg-background flex-wrap"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {receipt.full_name || t("receipt_from")}
+                                  </p>
+                                  <a
+                                    href={receipt.receipt_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                    {t("view_receipt")}
+                                  </a>
+                                </div>
+                                {receipt.status === "confirmed" ? (
+                                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                                    <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                                    {t("payment_confirmed")}
+                                  </Badge>
+                                ) : receipt.status === "rejected" ? (
+                                  <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                                    <XCircle className="w-3.5 h-3.5 mr-1" />
+                                    {t("payment_rejected")}
+                                  </Badge>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                      <Clock className="w-3.5 h-3.5 mr-1" />
+                                      {t("payment_submitted")}
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updatePaymentStatus(receipt.id, "confirmed")}
+                                      className="bg-green-600 hover:bg-green-700 h-8"
+                                    >
+                                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t("confirm_payment")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => updatePaymentStatus(receipt.id, "rejected")}
+                                      className="h-8"
+                                    >
+                                      <XCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t("reject_payment")}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
@@ -674,12 +940,12 @@ export default function InboxPage() {
                                   )}
 
                                   {/* Actions */}
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-2 items-center flex-wrap">
                                     {app.status === "pending" && (
                                       <>
                                         <Button
                                           size="sm"
-                                          onClick={() => updateApplicationStatus(app.id, "approved")}
+                                          onClick={() => updateApplicationStatus(app, conf, "approved")}
                                           className="bg-green-600 hover:bg-green-700"
                                         >
                                           <CheckCircle className="h-4 w-4 mr-1" />
@@ -688,12 +954,33 @@ export default function InboxPage() {
                                         <Button
                                           size="sm"
                                           variant="destructive"
-                                          onClick={() => updateApplicationStatus(app.id, "rejected")}
+                                          onClick={() => updateApplicationStatus(app, conf, "rejected")}
                                         >
                                           <XCircle className="h-4 w-4 mr-1" />
                                           {t("reject")}
                                         </Button>
                                       </>
+                                    )}
+
+                                    {/* Award selector (for approved delegates) */}
+                                    {app.status === "approved" && (
+                                      <div className="flex items-center gap-2">
+                                        <Award className="w-4 h-4 text-yellow-600" />
+                                        <select
+                                          className="text-sm border rounded-md px-2 py-1.5 bg-background"
+                                          value={
+                                            conf.awards.find((a) => a.user_id === app.user_id)?.award_type || ""
+                                          }
+                                          onChange={(e) => assignAward(conf.id, app.user_id, e.target.value)}
+                                        >
+                                          <option value="">{t("no_award")}</option>
+                                          {AWARD_TYPES.map((type: AwardType) => (
+                                            <option key={type} value={type}>
+                                              {t(awardLabelKey(type) as never)}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
                                     )}
                                   </div>
                                 </div>

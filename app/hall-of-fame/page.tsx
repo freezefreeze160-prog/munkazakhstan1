@@ -8,6 +8,13 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Trophy, Medal, Star, Award } from "lucide-react"
+import {
+  computeScore,
+  levelFromScore,
+  awardLabelKey,
+  type AwardType,
+  type DelegateLevel,
+} from "@/lib/awards"
 
 interface DelegateProfile {
   user_id: string
@@ -15,14 +22,8 @@ interface DelegateProfile {
   avatar_url: string | null
   conferences_count: number
   awards_count: number
-}
-
-type DelegateLevel = "bronze" | "silver" | "gold"
-
-function getDelegateLevel(conferencesCount: number): DelegateLevel {
-  if (conferencesCount >= 6) return "gold"
-  if (conferencesCount >= 3) return "silver"
-  return "bronze"
+  top_award: AwardType | null
+  score: number
 }
 
 function getLevelColor(level: DelegateLevel) {
@@ -60,28 +61,33 @@ export default function HallOfFamePage() {
     try {
       const client = createBrowserClient()
 
-      const { data: registrations } = await client
-        .from("registrations")
+      // Conferences attended = approved delegate applications
+      const { data: applications } = await client
+        .from("delegate_applications")
         .select("user_id, status")
         .eq("status", "approved")
 
-      if (!registrations || registrations.length === 0) {
-        setDelegates([])
-        setLoading(false)
-        return
-      }
-
       const userCounts: Record<string, number> = {}
-      for (const reg of registrations) {
-        userCounts[reg.user_id] = (userCounts[reg.user_id] || 0) + 1
+      for (const app of applications || []) {
+        if (app.user_id) userCounts[app.user_id] = (userCounts[app.user_id] || 0) + 1
       }
 
-      const sortedUserIds = Object.entries(userCounts)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 20)
-        .map(([id]) => id)
+      // All awards
+      const { data: awards } = await client
+        .from("conference_awards")
+        .select("user_id, award_type")
 
-      if (sortedUserIds.length === 0) {
+      const userAwards: Record<string, AwardType[]> = {}
+      for (const aw of awards || []) {
+        if (!aw.user_id) continue
+        if (!userAwards[aw.user_id]) userAwards[aw.user_id] = []
+        userAwards[aw.user_id].push(aw.award_type as AwardType)
+        // Anyone with an award also counts as having attended, even if no approved app row
+        if (userCounts[aw.user_id] === undefined) userCounts[aw.user_id] = 1
+      }
+
+      const candidateIds = Object.keys(userCounts)
+      if (candidateIds.length === 0) {
         setDelegates([])
         setLoading(false)
         return
@@ -89,21 +95,39 @@ export default function HallOfFamePage() {
 
       const { data: profiles } = await client
         .from("profiles")
-        .select("user_id, full_name, avatar_url")
-        .in("user_id", sortedUserIds)
+        .select("user_id, full_name, photo_url")
+        .in("user_id", candidateIds)
 
-      const delegateProfiles: DelegateProfile[] = sortedUserIds
+      // Award ranking for picking the "top" award to display
+      const awardRank: Record<AwardType, number> = {
+        best_delegate: 5,
+        outstanding_delegate: 4,
+        best_position_paper: 3,
+        honorable_mention: 2,
+        participation: 1,
+      }
+
+      const delegateProfiles: DelegateProfile[] = candidateIds
         .map((userId) => {
           const profile = profiles?.find((p) => p.user_id === userId)
+          const awardsForUser = userAwards[userId] || []
+          const topAward =
+            awardsForUser.length > 0
+              ? awardsForUser.reduce((best, a) => (awardRank[a] > awardRank[best] ? a : best))
+              : null
           return {
             user_id: userId,
-            full_name: profile?.full_name || "Delegate",
-            avatar_url: profile?.avatar_url || null,
+            full_name: profile?.full_name || "",
+            avatar_url: profile?.photo_url || null,
             conferences_count: userCounts[userId],
-            awards_count: 0,
+            awards_count: awardsForUser.length,
+            top_award: topAward,
+            score: computeScore(userCounts[userId], awardsForUser),
           }
         })
-        .filter((d) => d.full_name !== "Delegate")
+        .filter((d) => d.full_name.trim() !== "")
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 20)
 
       setDelegates(delegateProfiles)
     } catch (error) {
@@ -177,7 +201,7 @@ export default function HallOfFamePage() {
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                 {delegates.map((delegate, index) => {
-                  const level = getDelegateLevel(delegate.conferences_count)
+                  const level = levelFromScore(delegate.score)
                   return (
                     <Card
                       key={delegate.user_id}
@@ -235,6 +259,15 @@ export default function HallOfFamePage() {
                             <p className="text-sm text-muted-foreground mt-2">
                               {delegate.conferences_count} {t("conferences_attended")}
                             </p>
+                            {delegate.top_award && (
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <Award className="w-3.5 h-3.5 text-yellow-600" />
+                                <span className="text-xs font-medium text-yellow-700">
+                                  {t(awardLabelKey(delegate.top_award) as never)}
+                                  {delegate.awards_count > 1 && ` +${delegate.awards_count - 1}`}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </CardContent>
