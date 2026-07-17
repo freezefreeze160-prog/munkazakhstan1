@@ -9,7 +9,7 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock } from "lucide-react"
+import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock, Download } from "lucide-react"
 import Link from "next/link"
 
 interface DelegateApplication {
@@ -406,6 +406,60 @@ export default function InboxPage() {
     }
   }
 
+  function exportApplicationsCsv(conf: ConferenceWithApplications) {
+    if (conf.applications.length === 0) {
+      alert(t("export_no_data"))
+      return
+    }
+    const committeeName = (id: string | null) =>
+      conf.committees.find((c) => c.id === id)?.name || ""
+    const headers = [
+      t("full_name"),
+      t("email"),
+      t("phone"),
+      t("status"),
+      t("primary_choice"),
+      t("secondary_choice"),
+      t("tertiary_choice"),
+      t("assigned_committee"),
+      t("assigned_country"),
+      t("motivation"),
+      t("submitted_on"),
+    ]
+    const escape = (val: unknown) => {
+      const s = String(val ?? "")
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+    const rows = conf.applications.map((app) =>
+      [
+        app.full_name,
+        app.email,
+        app.phone,
+        t(app.status as never) || app.status,
+        committeeName(app.primary_committee_id),
+        committeeName(app.secondary_committee_id),
+        committeeName(app.third_committee_id),
+        committeeName(app.assigned_committee_id),
+        app.assigned_country || "",
+        app.motivation || "",
+        app.created_at ? new Date(app.created_at).toLocaleDateString() : "",
+      ]
+        .map(escape)
+        .join(","),
+    )
+    const csv = "﻿" + [headers.map(escape).join(","), ...rows].join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    const safeName = getConferenceName(conf).replace(/[^a-zA-Z0-9а-яА-Я_-]+/g, "_")
+    link.download = `${safeName || "applications"}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   function getConferenceName(conf: ConferenceWithApplications) {
     return language === "ru" ? conf.name_ru : language === "kk" ? conf.name_kk : conf.name_en
   }
@@ -568,14 +622,24 @@ export default function InboxPage() {
                 .map((conf) => (
                   <Card key={conf.id}>
                     <CardHeader>
-                      <CardTitle className="text-2xl">{getConferenceName(conf)}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        {getConferenceDate(conf)}
-                        <span className="ml-2">
-                          • {conf.applications.length} {t("applications")}
-                        </span>
-                      </CardDescription>
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <div>
+                          <CardTitle className="text-2xl">{getConferenceName(conf)}</CardTitle>
+                          <CardDescription className="flex items-center gap-2 mt-1">
+                            <Calendar className="w-4 h-4" />
+                            {getConferenceDate(conf)}
+                            <span className="ml-2">
+                              • {conf.applications.length} {t("applications")}
+                            </span>
+                          </CardDescription>
+                        </div>
+                        {conf.applications.length > 0 && (
+                          <Button size="sm" variant="outline" onClick={() => exportApplicationsCsv(conf)}>
+                            <Download className="w-4 h-4 mr-2" />
+                            {t("export_csv")}
+                          </Button>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent>
                       {conf.committees.length > 0 && (

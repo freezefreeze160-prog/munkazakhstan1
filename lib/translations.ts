@@ -289,6 +289,9 @@ export const translations = {
     // Photo gallery
     photo_gallery: "Фотогалерея",
     photo_gallery_desc: "Фотографии с конференции",
+    export_csv: "Экспорт в CSV",
+    export_no_data: "Нет заявок для экспорта",
+    status: "Статус",
     add_photos: "Добавить фото",
     no_photos: "Фотографий пока нет",
     photo_caption_optional: "Подпись (необязательно)",
@@ -667,6 +670,9 @@ export const translations = {
     // Photo gallery
     photo_gallery: "Фотогалерея",
     photo_gallery_desc: "Конференция фотосуреттері",
+    export_csv: "CSV-ге экспорт",
+    export_no_data: "Экспорттауға өтінімдер жоқ",
+    status: "Мәртебе",
     add_photos: "Фото қосу",
     no_photos: "Әзірге фото жоқ",
     photo_caption_optional: "Сипаттама (міндетті емес)",
@@ -1044,6 +1050,9 @@ export const translations = {
     // Photo gallery
     photo_gallery: "Photo gallery",
     photo_gallery_desc: "Photos from the conference",
+    export_csv: "Export to CSV",
+    export_no_data: "No applications to export",
+    status: "Status",
     add_photos: "Add photos",
     no_photos: "No photos yet",
     photo_caption_optional: "Caption (optional)",
