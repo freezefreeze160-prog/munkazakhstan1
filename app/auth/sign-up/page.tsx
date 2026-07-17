@@ -144,7 +144,7 @@ export default function SignUpPage() {
                     <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
                   </div>
                 )}
-                <Button type="submit" className="w-full bg-[#006633] hover:bg-[#004d26]" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
                   {isLoading ? t("creating_account") : t("sign_up")}
                 </Button>
               </div>

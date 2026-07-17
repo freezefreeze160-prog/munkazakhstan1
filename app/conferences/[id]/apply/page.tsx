@@ -351,7 +351,7 @@ export default function ApplyToConferencePage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
-                    className="flex-1 bg-[#006633] hover:bg-[#004d26]"
+                    className="flex-1 bg-primary hover:bg-primary/90"
                     disabled={submitting || committees.length === 0}
                   >
                     {submitting ? t("submitting") : t("submit")}

@@ -130,7 +130,7 @@ export default function ConferencesPage() {
                       <p className="text-sm text-muted-foreground line-clamp-3">{getConferenceDescription(conf)}</p>
                     )}
                     <div className="flex gap-2">
-                      <Button asChild className="flex-1 bg-[#006633] hover:bg-[#004d26]" disabled={!userId}>
+                      <Button asChild className="flex-1 bg-primary hover:bg-primary/90" disabled={!userId}>
                         <Link href={`/conferences/${conf.id}/apply`}>{t("apply_to_conference")}</Link>
                       </Button>
                       <Button asChild variant="outline">

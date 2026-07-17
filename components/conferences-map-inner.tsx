@@ -31,7 +31,7 @@ function makeIcon(count: number) {
         justify-content: center;
         width: 34px;
         height: 34px;
-        background: #006633;
+        background: #2563eb;
         color: #fff;
         border: 2px solid #fff;
         border-radius: 50% 50% 50% 0;
@@ -83,7 +83,7 @@ export default function ConferencesMapInner({
                   <li key={conf.id}>
                     <Link
                       href={`/conferences/${conf.id}`}
-                      style={{ color: "#006633", fontWeight: 600, textDecoration: "none" }}
+                      style={{ color: "#2563eb", fontWeight: 600, textDecoration: "none" }}
                     >
                       {conf.name}
                     </Link>

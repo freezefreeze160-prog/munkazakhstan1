@@ -261,7 +261,7 @@ export default function ConferenceDetailPage() {
 
               <div className="pt-4 border-t">
                 {userId ? (
-                  <Button asChild className="w-full bg-[#006633] hover:bg-[#004d26]" size="lg">
+                  <Button asChild className="w-full bg-primary hover:bg-primary/90" size="lg">
                     <Link href={`/conferences/${conference.id}/apply`}>{t("apply_to_conference")}</Link>
                   </Button>
                 ) : (

@@ -370,7 +370,7 @@ export default function DashboardPage() {
               {t("go_to_home")}
             </Link>
           </Button>
-          <Button asChild className="bg-[#006633] hover:bg-[#004d26]">
+          <Button asChild className="bg-primary hover:bg-primary/90">
             <Link href="/register">
               <Calendar className="mr-2 h-4 w-4" />
               {t("register_for_conference")}
@@ -484,7 +484,7 @@ export default function DashboardPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleSaveProfile} disabled={isSaving} className="bg-[#006633] hover:bg-[#004d26]">
+                  <Button onClick={handleSaveProfile} disabled={isSaving} className="bg-primary hover:bg-primary/90">
                     {isSaving ? t("saving") : t("save")}
                   </Button>
                   <Button onClick={() => setIsEditing(false)} variant="outline">
@@ -653,7 +653,7 @@ export default function DashboardPage() {
             {registrations.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground mb-4">{t("no_registrations")}</p>
-                <Button asChild className="bg-[#006633] hover:bg-[#004d26]">
+                <Button asChild className="bg-primary hover:bg-primary/90">
                   <Link href="/register">{t("register_for_conference")}</Link>
                 </Button>
               </div>

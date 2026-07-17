@@ -701,7 +701,7 @@ export default function CreateConferencePage() {
               )}
 
               <div className="flex gap-4">
-                <Button type="submit" className="flex-1 bg-[#006633] hover:bg-[#004d26]" disabled={loading}>
+                <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90" disabled={loading}>
                   {loading ? t("creating_account") : t("create")}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => router.push("/")} className="flex-1">
