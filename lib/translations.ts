@@ -296,6 +296,23 @@ export const translations = {
     position_paper_template_title: "Шаблон Position Paper",
     download_template: "Скачать шаблон",
 
+    // Certificates
+    certificate: "Сертификат",
+    certificate_desc: "Загрузите свой дизайн сертификата — сайт впишет имя делегата",
+    upload_certificate_template: "Загрузить шаблон",
+    replace_template: "Заменить шаблон",
+    download_certificate: "Скачать сертификат",
+    certificate_settings: "Настройки сертификата",
+    name_position_x: "Позиция имени X (%)",
+    name_position_y: "Позиция имени Y (%)",
+    font_size_label: "Размер шрифта (%)",
+    text_color_label: "Цвет текста",
+    show_subtitle_label: "Показывать награду/статус",
+    certificate_saved: "Настройки сертификата сохранены",
+    no_certificate_yet: "Сертификат для этой конференции ещё не готов",
+    certificate_preview: "Предпросмотр",
+    get_my_certificate: "Мой сертификат",
+
     // Photo gallery
     photo_gallery: "Фотогалерея",
     photo_gallery_desc: "Фотографии с конференции",
@@ -701,6 +718,23 @@ export const translations = {
     position_paper_template_title: "Position Paper үлгісі",
     download_template: "Үлгіні жүктеу",
 
+    // Certificates
+    certificate: "Сертификат",
+    certificate_desc: "Өз сертификат дизайныңызды жүктеңіз — сайт делегаттың атын жазады",
+    upload_certificate_template: "Үлгіні жүктеу",
+    replace_template: "Үлгіні ауыстыру",
+    download_certificate: "Сертификатты жүктеу",
+    certificate_settings: "Сертификат баптаулары",
+    name_position_x: "Аты орны X (%)",
+    name_position_y: "Аты орны Y (%)",
+    font_size_label: "Қаріп өлшемі (%)",
+    text_color_label: "Мәтін түсі",
+    show_subtitle_label: "Марапат/мәртебені көрсету",
+    certificate_saved: "Сертификат баптаулары сақталды",
+    no_certificate_yet: "Бұл конференцияға сертификат әзірше дайын емес",
+    certificate_preview: "Алдын ала қарау",
+    get_my_certificate: "Менің сертификатым",
+
     // Photo gallery
     photo_gallery: "Фотогалерея",
     photo_gallery_desc: "Конференция фотосуреттері",
@@ -1104,6 +1138,23 @@ export const translations = {
     glossary_title: "MUN Glossary",
     position_paper_template_title: "Position Paper Template",
     download_template: "Download template",
+
+    // Certificates
+    certificate: "Certificate",
+    certificate_desc: "Upload your own certificate design — the site writes the delegate's name on it",
+    upload_certificate_template: "Upload template",
+    replace_template: "Replace template",
+    download_certificate: "Download certificate",
+    certificate_settings: "Certificate settings",
+    name_position_x: "Name position X (%)",
+    name_position_y: "Name position Y (%)",
+    font_size_label: "Font size (%)",
+    text_color_label: "Text color",
+    show_subtitle_label: "Show award / status",
+    certificate_saved: "Certificate settings saved",
+    no_certificate_yet: "The certificate for this conference is not ready yet",
+    certificate_preview: "Preview",
+    get_my_certificate: "My certificate",
 
     // Photo gallery
     photo_gallery: "Photo gallery",

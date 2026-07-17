@@ -13,6 +13,7 @@ import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText } from "lucide
 import { ConferenceDocuments } from "@/components/conference-documents"
 import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 import { ConferenceGallery } from "@/components/conference-gallery"
+import { ConferenceCertificate } from "@/components/conference-certificate"
 
 interface Conference {
   id: string
@@ -202,6 +203,9 @@ export default function ConferenceDetailPage() {
 
               {/* Photo gallery */}
               <ConferenceGallery conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
+
+              {/* Certificates */}
+              <ConferenceCertificate conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
 
               {/* Payment Details */}
               {(conference.payment_bank || conference.payment_card_number) && (
