@@ -35,7 +35,7 @@ export function SearchUsers() {
     }
 
     fetchUsers()
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     if (searchQuery.trim() === "") {

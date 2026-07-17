@@ -74,6 +74,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const getUser = async () => {
+      try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -146,10 +147,14 @@ export default function DashboardPage() {
         }
       }
 
-      setLoading(false)
+      } catch (err) {
+        console.error("Error loading dashboard:", err)
+      } finally {
+        setLoading(false)
+      }
     }
     getUser()
-  }, [supabase])
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
