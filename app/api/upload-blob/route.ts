@@ -1,9 +1,9 @@
-import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-// Generic authenticated file upload to Vercel Blob.
+// Generic authenticated file upload to Supabase Storage.
 // Used for payment receipts, gallery photos, and certificate templates.
+const BUCKET = "uploads"
 const ALLOWED_TYPES = [
   "image/png",
   "image/jpeg",
@@ -43,18 +43,22 @@ export async function POST(request: NextRequest) {
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")
-    const filename = `${folder}/${user.id}-${Date.now()}-${safeName}`
-    const blob = await put(filename, file, {
-      access: "public",
-      contentType: file.type || "application/octet-stream",
-    })
+    const path = `${folder}/${user.id}-${Date.now()}-${safeName}`
 
-    return NextResponse.json({
-      url: blob.url,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    })
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: true })
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError)
+      return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(BUCKET).getPublicUrl(path)
+
+    return NextResponse.json({ url: publicUrl, name: file.name, size: file.size, type: file.type })
   } catch (error) {
     console.error("Blob upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
