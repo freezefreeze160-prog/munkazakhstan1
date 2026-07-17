@@ -286,6 +286,21 @@ export const translations = {
     current_deputy: "Текущий ответственный",
     pending_conference_requests: "Конференции ожидают одобрения",
 
+    // Hall of Fame & Levels
+    hall_of_fame: "Зал славы",
+    hall_of_fame_desc: "Лучшие делегаты Казахстана",
+    delegate_level: "Уровень делегата",
+    bronze_delegate: "Bronze Delegate",
+    silver_delegate: "Silver Delegate",
+    gold_delegate: "Gold Delegate",
+    conferences_attended: "Конференций посещено",
+    awards_received: "Наград получено",
+    level_progress: "Прогресс уровня",
+    top_delegates: "Лучшие делегаты",
+    level_bronze_desc: "1-2 конференции",
+    level_silver_desc: "3-5 конференций",
+    level_gold_desc: "6+ конференций",
+
     // Notifications
     notifications: "Уведомления",
     mark_all_read: "Прочитать все",
@@ -577,6 +592,21 @@ export const translations = {
     current_deputy: "Қазіргі жауапты",
     pending_conference_requests: "Конференциялар мақұлдауды күтуде",
 
+    // Hall of Fame & Levels
+    hall_of_fame: "Даңқ залы",
+    hall_of_fame_desc: "Қазақстанның үздік делегаттары",
+    delegate_level: "Делегат деңгейі",
+    bronze_delegate: "Bronze Delegate",
+    silver_delegate: "Silver Delegate",
+    gold_delegate: "Gold Delegate",
+    conferences_attended: "Қатысқан конференциялар",
+    awards_received: "Алынған марапаттар",
+    level_progress: "Деңгей прогресі",
+    top_delegates: "Үздік делегаттар",
+    level_bronze_desc: "1-2 конференция",
+    level_silver_desc: "3-5 конференция",
+    level_gold_desc: "6+ конференция",
+
     // Notifications
     notifications: "Хабарландырулар",
     mark_all_read: "Барлығын оқылды деп белгілеу",
@@ -866,6 +896,21 @@ export const translations = {
     deputy_assigned: "Responsible assigned!",
     current_deputy: "Current responsible",
     pending_conference_requests: "Conferences pending approval",
+
+    // Hall of Fame & Levels
+    hall_of_fame: "Hall of Fame",
+    hall_of_fame_desc: "Top delegates of Kazakhstan",
+    delegate_level: "Delegate level",
+    bronze_delegate: "Bronze Delegate",
+    silver_delegate: "Silver Delegate",
+    gold_delegate: "Gold Delegate",
+    conferences_attended: "Conferences attended",
+    awards_received: "Awards received",
+    level_progress: "Level progress",
+    top_delegates: "Top delegates",
+    level_bronze_desc: "1-2 conferences",
+    level_silver_desc: "3-5 conferences",
+    level_gold_desc: "6+ conferences",
 
     // Notifications
     notifications: "Notifications",

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
 import { useTheme } from "@/contexts/theme-context"
 import { Button } from "@/components/ui/button"
-import { User, Search, Shield, Moon, Sun, Inbox } from "lucide-react"
+import { User, Search, Shield, Moon, Sun, Inbox, Trophy } from "lucide-react"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -107,6 +107,10 @@ export function Header() {
             <Link href="/register" className="text-foreground hover:text-primary font-medium transition-colors">
               {t("register")}
             </Link>
+            <Link href="/hall-of-fame" className="text-foreground hover:text-primary font-medium transition-colors">
+              <Trophy className="w-4 h-4 inline mr-1" />
+              {t("hall_of_fame")}
+            </Link>
             <Link href="/search" className="text-foreground hover:text-primary font-medium transition-colors">
               <Search className="w-4 h-4 inline mr-1" />
               {t("search_users")}
@@ -199,6 +203,10 @@ export function Header() {
           </Link>
           <Link href="/register" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
             {t("register")}
+          </Link>
+          <Link href="/hall-of-fame" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
+            <Trophy className="w-4 h-4 inline mr-1" />
+            {t("hall_of_fame")}
           </Link>
           {user ? (
             <>
