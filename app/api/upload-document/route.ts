@@ -1,7 +1,7 @@
-import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+const BUCKET = "uploads"
 const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",
@@ -48,11 +48,20 @@ export async function POST(request: NextRequest) {
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")
-    const filename = `documents/${conferenceId}/${docType}-${user.id}-${Date.now()}-${safeName}`
-    const blob = await put(filename, file, {
-      access: "public",
-      contentType: file.type || "application/octet-stream",
-    })
+    const path = `documents/${conferenceId}/${docType}-${user.id}-${Date.now()}-${safeName}`
+
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: true })
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError)
+      return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(BUCKET).getPublicUrl(path)
 
     // Insert record. RLS enforces permission (background guides only for organizers).
     const { data: inserted, error: insertError } = await supabase
@@ -62,7 +71,7 @@ export async function POST(request: NextRequest) {
         uploaded_by: user.id,
         doc_type: docType,
         title: title || file.name,
-        file_url: blob.url,
+        file_url: publicUrl,
         file_name: file.name,
         file_size: file.size,
         committee_id: committeeId || null,
