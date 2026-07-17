@@ -9,7 +9,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText } from "lucide-react"
+import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText, Bookmark, BookmarkCheck } from "lucide-react"
 import { ConferenceDocuments } from "@/components/conference-documents"
 import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 import { ConferenceGallery } from "@/components/conference-gallery"
@@ -34,6 +34,7 @@ interface Conference {
   conditions_en: string
   organizer_contact: string
   creator_id: string | null
+  poster_url: string | null
   registration_fee_amount: number | null
   registration_fee_currency: string | null
   payment_bank: string | null
@@ -51,6 +52,8 @@ export default function ConferenceDetailPage() {
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [isOrganizer, setIsOrganizer] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favLoading, setFavLoading] = useState(false)
 
   useEffect(() => {
     loadConference()
@@ -83,11 +86,46 @@ export default function ConferenceDetailPage() {
             profileData?.role === "founder" || profileData?.role === "general_secretary"
         }
         setIsOrganizer(isCreator || hasElevatedRole)
+
+        const { data: fav } = await supabase
+          .from("conference_favorites")
+          .select("id")
+          .eq("conference_id", params.id)
+          .eq("user_id", user.id)
+          .maybeSingle()
+        setIsFavorite(!!fav)
       }
     } catch (error) {
       console.error("[v0] Error loading conference:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function toggleFavorite() {
+    if (!userId) {
+      router.push("/auth/login")
+      return
+    }
+    setFavLoading(true)
+    try {
+      if (isFavorite) {
+        await supabase
+          .from("conference_favorites")
+          .delete()
+          .eq("conference_id", params.id)
+          .eq("user_id", userId)
+        setIsFavorite(false)
+      } else {
+        await supabase
+          .from("conference_favorites")
+          .insert({ conference_id: params.id as string, user_id: userId })
+        setIsFavorite(true)
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error)
+    } finally {
+      setFavLoading(false)
     }
   }
 
@@ -141,36 +179,104 @@ export default function ConferenceDetailPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-1 py-12">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <Button asChild variant="ghost" className="mb-6">
-            <Link href="/conferences">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t("view_conferences")}
-            </Link>
-          </Button>
+      <main className="flex-1">
+        {/* Cinematic hero */}
+        <section className="relative">
+          <div className="absolute inset-0 overflow-hidden">
+            {conference.poster_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={conference.poster_url}
+                alt=""
+                aria-hidden
+                className="w-full h-full object-cover scale-110 blur-2xl opacity-40"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/5" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/75 to-background" />
+          </div>
 
+          <div className="relative container mx-auto px-4 max-w-4xl pt-6 pb-8">
+            <Button asChild variant="ghost" className="mb-6 -ml-2">
+              <Link href="/conferences">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {t("view_conferences")}
+              </Link>
+            </Button>
+
+            <div className="flex flex-col sm:flex-row gap-6">
+              {/* Poster */}
+              <div className="w-40 sm:w-52 flex-shrink-0 mx-auto sm:mx-0">
+                <div className="aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border border-border/40 bg-muted">
+                  {conference.poster_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={conference.poster_url} alt={name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Calendar className="w-10 h-10 text-muted-foreground/40" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 flex flex-col justify-end">
+                <h1 className="text-3xl md:text-5xl font-bold text-foreground text-balance">{name}</h1>
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4 text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    {date}
+                  </span>
+                  {conference.time && (
+                    <span className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      {conference.time}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {conference.location}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-3 mt-6">
+                  {userId ? (
+                    <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+                      <Link href={`/conferences/${conference.id}/apply`}>{t("apply_to_conference")}</Link>
+                    </Button>
+                  ) : (
+                    <Button asChild size="lg" variant="outline">
+                      <Link href="/auth/login">{t("login_to_apply")}</Link>
+                    </Button>
+                  )}
+                  <Button
+                    onClick={toggleFavorite}
+                    disabled={favLoading}
+                    size="lg"
+                    variant={isFavorite ? "default" : "outline"}
+                  >
+                    {isFavorite ? (
+                      <>
+                        <BookmarkCheck className="w-4 h-4 mr-2" />
+                        {t("in_favorites")}
+                      </>
+                    ) : (
+                      <>
+                        <Bookmark className="w-4 h-4 mr-2" />
+                        {t("add_to_favorites")}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="container mx-auto px-4 max-w-4xl pb-12">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-3xl">{name}</CardTitle>
-              <CardDescription className="space-y-2 text-base">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  {date}
-                </div>
-                {conference.time && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    {conference.time}
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  {conference.location}
-                </div>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               {description && (
                 <div>
                   <h3 className="font-semibold text-lg mb-2">{t("conference_description")}</h3>

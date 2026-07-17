@@ -62,6 +62,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [myConferences, setMyConferences] = useState<ConferenceWithApplications[]>([])
+  const [favorites, setFavorites] = useState<any[]>([])
   const [bio, setBio] = useState("")
   const [photoUrl, setPhotoUrl] = useState("")
   const [fullName, setFullName] = useState("")
@@ -118,6 +119,16 @@ export default function DashboardPage() {
 
         if (regs) {
           setRegistrations(regs)
+        }
+
+        const { data: favs } = await supabase
+          .from("conference_favorites")
+          .select("conference_id, user_conferences(id, name_ru, name_kk, name_en, date_ru, date_kk, date_en, location, poster_url)")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+
+        if (favs) {
+          setFavorites(favs.map((f: any) => f.user_conferences).filter(Boolean))
         }
 
         if (profileData?.role === "general_secretary" || profileData?.role === "founder") {
@@ -639,6 +650,48 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Favorite conferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("my_favorites")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {favorites.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("no_favorites")}</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {favorites.map((conf) => {
+                  const cname = language === "ru" ? conf.name_ru : language === "kk" ? conf.name_kk : conf.name_en
+                  const cdate = language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en
+                  return (
+                    <Link
+                      key={conf.id}
+                      href={`/conferences/${conf.id}`}
+                      className="flex gap-3 p-3 rounded-lg border hover:border-primary/50 transition-colors"
+                    >
+                      <div className="w-14 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                        {conf.poster_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={conf.poster_url} alt={cname} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-muted-foreground/40" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm text-foreground truncate">{cname}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{cdate}</p>
+                        <p className="text-xs text-muted-foreground truncate">{conf.location}</p>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

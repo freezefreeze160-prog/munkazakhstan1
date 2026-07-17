@@ -9,7 +9,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Clock, Info } from "lucide-react"
+import { Calendar, MapPin, Info } from "lucide-react"
 
 interface Conference {
   id: string
@@ -32,6 +32,7 @@ interface Conference {
   creator_id: string
   created_at: string
   status: string // Assuming status is a field in the Conference interface
+  poster_url: string | null
 }
 
 export default function ConferencesPage() {
@@ -105,43 +106,62 @@ export default function ConferencesPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
               {conferences.map((conf) => (
-                <Card key={conf.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="text-xl">{getConferenceName(conf)}</CardTitle>
-                    <CardDescription className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4" />
-                        {getConferenceDate(conf)}
+                <Card key={conf.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-row">
+                  {/* Poster */}
+                  <Link
+                    href={`/conferences/${conf.id}`}
+                    className="w-28 sm:w-36 flex-shrink-0 bg-muted relative"
+                  >
+                    {conf.poster_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={conf.poster_url}
+                        alt={getConferenceName(conf)}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Calendar className="w-8 h-8 text-muted-foreground/40" />
                       </div>
-                      {conf.time && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4" />
-                          {conf.time}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="w-4 h-4" />
-                        {conf.location}
-                      </div>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {getConferenceDescription(conf) && (
-                      <p className="text-sm text-muted-foreground line-clamp-3">{getConferenceDescription(conf)}</p>
                     )}
-                    <div className="flex gap-2">
-                      <Button asChild className="flex-1 bg-primary hover:bg-primary/90" disabled={!userId}>
-                        <Link href={`/conferences/${conf.id}/apply`}>{t("apply_to_conference")}</Link>
-                      </Button>
-                      <Button asChild variant="outline">
-                        <Link href={`/conferences/${conf.id}`}>
-                          <Info className="w-4 h-4 mr-2" />
-                          {t("learn_more")}
+                  </Link>
+
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg leading-snug">
+                        <Link href={`/conferences/${conf.id}`} className="hover:text-primary transition-colors">
+                          {getConferenceName(conf)}
                         </Link>
-                      </Button>
-                    </div>
-                    {!userId && <p className="text-xs text-muted-foreground text-center">{t("login")} to apply</p>}
-                  </CardContent>
+                      </CardTitle>
+                      <CardDescription className="space-y-1 pt-1">
+                        <span className="flex items-center gap-2 text-sm">
+                          <Calendar className="w-4 h-4 flex-shrink-0" />
+                          {getConferenceDate(conf)}
+                        </span>
+                        <span className="flex items-center gap-2 text-sm">
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">{conf.location}</span>
+                        </span>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3 mt-auto">
+                      {getConferenceDescription(conf) && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {getConferenceDescription(conf)}
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        <Button asChild size="sm" className="flex-1 bg-primary hover:bg-primary/90" disabled={!userId}>
+                          <Link href={`/conferences/${conf.id}/apply`}>{t("apply_to_conference")}</Link>
+                        </Button>
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/conferences/${conf.id}`}>
+                            <Info className="w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </div>
                 </Card>
               ))}
             </div>

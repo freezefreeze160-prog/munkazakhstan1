@@ -42,6 +42,15 @@ export const translations = {
     upcoming_soon: "Скоро",
     calendar_view: "Календарь",
     view_all_conferences: "Посмотреть все конференции",
+    conference_poster: "Постер конференции",
+    upload_poster: "Загрузить постер",
+    change_poster: "Изменить постер",
+    poster_required: "Пожалуйста, загрузите постер конференции",
+    add_to_favorites: "В избранное",
+    in_favorites: "В избранном",
+    my_favorites: "Избранные конференции",
+    no_favorites: "У вас пока нет избранных конференций",
+    no_permission_create_conference: "У вас нет прав на создание конференции",
 
     // Auth
     login_desc: "Войдите в свой аккаунт",
@@ -473,6 +482,15 @@ export const translations = {
     upcoming_soon: "Жақында",
     calendar_view: "Күнтізбе",
     view_all_conferences: "Барлық конференцияларды көру",
+    conference_poster: "Конференция постері",
+    upload_poster: "Постер жүктеу",
+    change_poster: "Постерді өзгерту",
+    poster_required: "Конференция постерін жүктеңіз",
+    add_to_favorites: "Таңдаулыға",
+    in_favorites: "Таңдаулыда",
+    my_favorites: "Таңдаулы конференциялар",
+    no_favorites: "Сізде әзірге таңдаулы конференциялар жоқ",
+    no_permission_create_conference: "Сізде конференция құру құқығы жоқ",
 
     // Auth
     login_desc: "Аккаунтқа кіріңіз",
@@ -902,6 +920,15 @@ export const translations = {
     upcoming_soon: "Soon",
     calendar_view: "Calendar",
     view_all_conferences: "View all conferences",
+    conference_poster: "Conference poster",
+    upload_poster: "Upload poster",
+    change_poster: "Change poster",
+    poster_required: "Please upload a conference poster",
+    add_to_favorites: "Add to favorites",
+    in_favorites: "In favorites",
+    my_favorites: "Favorite conferences",
+    no_favorites: "You have no favorite conferences yet",
+    no_permission_create_conference: "You don't have permission to create a conference",
 
     // Auth
     login_desc: "Login to your account",
