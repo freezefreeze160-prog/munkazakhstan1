@@ -233,6 +233,7 @@ export const translations = {
     team_content_managers: "Контент менеджеры",
     team_designers: "Дизайнеры",
     team_partnership_managers: "Менеджеры по партнёрству",
+    team_media: "Медиа",
     team_other: "Другие члены команды",
 
     // Dashboard
@@ -662,6 +663,7 @@ export const translations = {
     team_content_managers: "Контент менеджерлері",
     team_designers: "Дизайнерлер",
     team_partnership_managers: "Серіктестік менеджерлері",
+    team_media: "Медиа",
     team_other: "Басқа команда мүшелері",
 
     // Dashboard
@@ -1090,6 +1092,7 @@ export const translations = {
     team_content_managers: "Content Managers",
     team_designers: "Designers",
     team_partnership_managers: "Partnership Managers",
+    team_media: "Media",
     team_other: "Other Team Members",
 
     // Dashboard
