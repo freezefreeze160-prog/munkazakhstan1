@@ -286,6 +286,16 @@ export const translations = {
     current_deputy: "Текущий ответственный",
     pending_conference_requests: "Конференции ожидают одобрения",
 
+    // Resources / FAQ
+    resources_nav: "Ресурсы",
+    resources_title: "Ресурсы для делегатов",
+    resources_desc: "Всё, что нужно знать новичку MUN: правила процедуры, словарь терминов и шаблон позиционного документа.",
+    faq_title: "Частые вопросы",
+    rop_title: "Правила процедуры (кратко)",
+    glossary_title: "Словарь MUN",
+    position_paper_template_title: "Шаблон Position Paper",
+    download_template: "Скачать шаблон",
+
     // Photo gallery
     photo_gallery: "Фотогалерея",
     photo_gallery_desc: "Фотографии с конференции",
@@ -681,6 +691,16 @@ export const translations = {
     current_deputy: "Қазіргі жауапты",
     pending_conference_requests: "Конференциялар мақұлдауды күтуде",
 
+    // Resources / FAQ
+    resources_nav: "Ресурстар",
+    resources_title: "Делегаттарға арналған ресурстар",
+    resources_desc: "MUN жаңадан бастаушыға қажет барлық нәрсе: рәсім ережелері, терминдер сөздігі және position paper үлгісі.",
+    faq_title: "Жиі қойылатын сұрақтар",
+    rop_title: "Рәсім ережелері (қысқаша)",
+    glossary_title: "MUN сөздігі",
+    position_paper_template_title: "Position Paper үлгісі",
+    download_template: "Үлгіні жүктеу",
+
     // Photo gallery
     photo_gallery: "Фотогалерея",
     photo_gallery_desc: "Конференция фотосуреттері",
@@ -1074,6 +1094,16 @@ export const translations = {
     deputy_assigned: "Responsible assigned!",
     current_deputy: "Current responsible",
     pending_conference_requests: "Conferences pending approval",
+
+    // Resources / FAQ
+    resources_nav: "Resources",
+    resources_title: "Delegate Resources",
+    resources_desc: "Everything a new MUN delegate needs: rules of procedure, a glossary of terms, and a position paper template.",
+    faq_title: "Frequently Asked Questions",
+    rop_title: "Rules of Procedure (quick guide)",
+    glossary_title: "MUN Glossary",
+    position_paper_template_title: "Position Paper Template",
+    download_template: "Download template",
 
     // Photo gallery
     photo_gallery: "Photo gallery",
