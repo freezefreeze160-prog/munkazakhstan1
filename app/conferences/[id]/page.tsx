@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText } from "lucide-react"
 import { ConferenceDocuments } from "@/components/conference-documents"
 import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
+import { ConferenceGallery } from "@/components/conference-gallery"
 
 interface Conference {
   id: string
@@ -198,6 +199,9 @@ export default function ConferenceDetailPage() {
                 </div>
                 <ConferenceDocuments conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
               </div>
+
+              {/* Photo gallery */}
+              <ConferenceGallery conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
 
               {/* Payment Details */}
               {(conference.payment_bank || conference.payment_card_number) && (

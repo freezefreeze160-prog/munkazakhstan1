@@ -286,6 +286,16 @@ export const translations = {
     current_deputy: "Текущий ответственный",
     pending_conference_requests: "Конференции ожидают одобрения",
 
+    // Photo gallery
+    photo_gallery: "Фотогалерея",
+    photo_gallery_desc: "Фотографии с конференции",
+    add_photos: "Добавить фото",
+    no_photos: "Фотографий пока нет",
+    photo_caption_optional: "Подпись (необязательно)",
+    photo_uploaded: "Фото добавлено!",
+    confirm_delete_photo: "Удалить это фото?",
+    uploading_photos: "Загрузка...",
+
     // Map
     map_title: "Карта конференций",
     map_desc: "MUN-конференции по городам Казахстана. Нажмите на маркер, чтобы посмотреть события.",
@@ -654,6 +664,16 @@ export const translations = {
     current_deputy: "Қазіргі жауапты",
     pending_conference_requests: "Конференциялар мақұлдауды күтуде",
 
+    // Photo gallery
+    photo_gallery: "Фотогалерея",
+    photo_gallery_desc: "Конференция фотосуреттері",
+    add_photos: "Фото қосу",
+    no_photos: "Әзірге фото жоқ",
+    photo_caption_optional: "Сипаттама (міндетті емес)",
+    photo_uploaded: "Фото қосылды!",
+    confirm_delete_photo: "Бұл фотоны жою керек пе?",
+    uploading_photos: "Жүктелуде...",
+
     // Map
     map_title: "Конференциялар картасы",
     map_desc: "Қазақстан қалалары бойынша MUN-конференциялар. Оқиғаларды көру үшін маркерді басыңыз.",
@@ -1020,6 +1040,16 @@ export const translations = {
     deputy_assigned: "Responsible assigned!",
     current_deputy: "Current responsible",
     pending_conference_requests: "Conferences pending approval",
+
+    // Photo gallery
+    photo_gallery: "Photo gallery",
+    photo_gallery_desc: "Photos from the conference",
+    add_photos: "Add photos",
+    no_photos: "No photos yet",
+    photo_caption_optional: "Caption (optional)",
+    photo_uploaded: "Photo added!",
+    confirm_delete_photo: "Delete this photo?",
+    uploading_photos: "Uploading...",
 
     // Map
     map_title: "Conferences Map",
