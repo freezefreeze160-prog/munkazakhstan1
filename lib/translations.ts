@@ -294,6 +294,9 @@ export const translations = {
     status: "Статус",
 
     // Awards
+    contact_info: "Контакты",
+    member_since: "Участник с",
+    achievements: "Достижения",
     awards_label: "Награды",
     award_participation: "Участник",
     award_honorable_mention: "Похвальная грамота",
@@ -686,6 +689,9 @@ export const translations = {
     status: "Мәртебе",
 
     // Awards
+    contact_info: "Байланыс",
+    member_since: "Мүше болды",
+    achievements: "Жетістіктер",
     awards_label: "Марапаттар",
     award_participation: "Қатысушы",
     award_honorable_mention: "Мақтау грамотасы",
@@ -1077,6 +1083,9 @@ export const translations = {
     status: "Status",
 
     // Awards
+    contact_info: "Contact info",
+    member_since: "Member since",
+    achievements: "Achievements",
     awards_label: "Awards",
     award_participation: "Participant",
     award_honorable_mention: "Honorable Mention",
