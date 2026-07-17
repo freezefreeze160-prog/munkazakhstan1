@@ -4,11 +4,53 @@ import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
 import { useTheme } from "@/contexts/theme-context"
 import { Button } from "@/components/ui/button"
-import { User, Search, Shield, Moon, Sun, Inbox, Trophy } from "lucide-react"
+import { User, Search, Shield, Moon, Sun, Inbox, Trophy, ChevronDown, Users, Newspaper, Info, FileText } from "lucide-react"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { NotificationBell } from "@/components/notification-bell"
+
+function NavDropdown({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="relative group">
+      <button className="flex items-center gap-1 text-foreground hover:text-primary font-medium transition-colors py-2">
+        {label}
+        <ChevronDown className="w-3.5 h-3.5 transition-transform group-hover:rotate-180" />
+      </button>
+      <div className="absolute top-full left-0 pt-1 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-200 z-50">
+        <div className="bg-background border border-border rounded-lg shadow-lg py-2 min-w-[200px]">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DropdownItem({
+  href,
+  icon,
+  children,
+}: {
+  href: string
+  icon?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-accent hover:text-primary transition-colors"
+    >
+      {icon && <span className="text-muted-foreground">{icon}</span>}
+      {children}
+    </Link>
+  )
+}
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage()
@@ -27,7 +69,6 @@ export function Header() {
         } = await supabase.auth.getUser()
 
         if (error) {
-          // Clear stale/invalid session
           await supabase.auth.signOut()
           setUser(null)
           setIsFounder(false)
@@ -48,7 +89,6 @@ export function Header() {
           }
         }
       } catch {
-        // Network or other error - clear session
         await supabase.auth.signOut()
         setUser(null)
         setIsFounder(false)
@@ -83,6 +123,9 @@ export function Header() {
     return () => subscription.unsubscribe()
   }, [supabase.auth])
 
+  const aboutLabel = language === "ru" ? "О проекте" : language === "kk" ? "Жоба туралы" : "About"
+  const moreLabel = language === "ru" ? "Ещё" : language === "kk" ? "Тағы" : "More"
+
   return (
     <header className="bg-background border-b border-border sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4 py-4">
@@ -91,36 +134,40 @@ export function Header() {
             <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">MUN Kazakhstan</h1>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-5">
             <Link href="/" className="text-foreground hover:text-primary font-medium transition-colors">
               {t("home")}
             </Link>
-            <Link href="/about" className="text-foreground hover:text-primary font-medium transition-colors">
-              {t("about")}
-            </Link>
-            <Link href="/secretariat" className="text-foreground hover:text-primary font-medium transition-colors">
-              {t("secretariat")}
-            </Link>
-            <Link href="/news" className="text-foreground hover:text-primary font-medium transition-colors">
-              {t("news")}
-            </Link>
+
+            <NavDropdown label={aboutLabel}>
+              <DropdownItem href="/about" icon={<Info className="w-4 h-4" />}>
+                {t("about")}
+              </DropdownItem>
+              <DropdownItem href="/secretariat" icon={<Users className="w-4 h-4" />}>
+                {t("secretariat")}
+              </DropdownItem>
+              <DropdownItem href="/news" icon={<Newspaper className="w-4 h-4" />}>
+                {t("news")}
+              </DropdownItem>
+            </NavDropdown>
+
             <Link href="/register" className="text-foreground hover:text-primary font-medium transition-colors">
               {t("register")}
             </Link>
-            <Link href="/hall-of-fame" className="text-foreground hover:text-primary font-medium transition-colors">
-              <Trophy className="w-4 h-4 inline mr-1" />
-              {t("hall_of_fame")}
-            </Link>
-            <Link href="/search" className="text-foreground hover:text-primary font-medium transition-colors">
-              <Search className="w-4 h-4 inline mr-1" />
-              {t("search_users")}
-            </Link>
-            {canManageConferences && (
-              <Link href="/inbox" className="text-foreground hover:text-primary font-medium transition-colors">
-                <Inbox className="w-4 h-4 inline mr-1" />
-                {t("inbox")}
-              </Link>
-            )}
+
+            <NavDropdown label={moreLabel}>
+              <DropdownItem href="/hall-of-fame" icon={<Trophy className="w-4 h-4" />}>
+                {t("hall_of_fame")}
+              </DropdownItem>
+              <DropdownItem href="/search" icon={<Search className="w-4 h-4" />}>
+                {t("search_users")}
+              </DropdownItem>
+              {canManageConferences && (
+                <DropdownItem href="/inbox" icon={<Inbox className="w-4 h-4" />}>
+                  {t("inbox")}
+                </DropdownItem>
+              )}
+            </NavDropdown>
           </nav>
 
           <div className="flex items-center gap-2">
