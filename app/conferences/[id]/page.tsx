@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText } from "lucide-react"
 import { ConferenceDocuments } from "@/components/conference-documents"
+import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 
 interface Conference {
   id: string
@@ -244,6 +245,9 @@ export default function ConferenceDetailPage() {
                       </p>
                     </div>
                   )}
+
+                  {/* Delegate uploads a payment receipt here */}
+                  {userId && <PaymentReceiptUpload conferenceId={conference.id} userId={userId} />}
                 </div>
               )}
 

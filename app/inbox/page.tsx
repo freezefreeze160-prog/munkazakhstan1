@@ -9,7 +9,7 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck } from "lucide-react"
+import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock } from "lucide-react"
 import Link from "next/link"
 
 interface DelegateApplication {
@@ -44,6 +44,16 @@ interface Committee {
   countries: string[]
 }
 
+interface PaymentReceipt {
+  id: string
+  conference_id: string
+  user_id: string
+  receipt_url: string
+  full_name: string | null
+  status: "submitted" | "confirmed" | "rejected"
+  created_at: string
+}
+
 interface ConferenceWithApplications {
   id: string
   name_ru: string
@@ -54,6 +64,7 @@ interface ConferenceWithApplications {
   date_en: string
   applications: DelegateApplication[]
   committees: Committee[]
+  receipts: PaymentReceipt[]
   status: string
   location: string
   registration_fee_amount: number | null
@@ -188,10 +199,17 @@ export default function InboxPage() {
 
             if (appsError) console.log("[v0] Apps load error:", appsError)
 
+            const { data: receipts } = await supabase
+              .from("payment_receipts")
+              .select("*")
+              .eq("conference_id", conf.id)
+              .order("created_at", { ascending: false })
+
             return {
               ...conf,
               applications: apps || [],
               committees: committeesData || [],
+              receipts: receipts || [],
             }
           }),
         )
@@ -324,6 +342,26 @@ export default function InboxPage() {
       await loadApplications()
     } catch (error) {
       console.error("[v0] Error updating application status:", error)
+      alert("Error: " + (error as Error).message)
+    }
+  }
+
+  async function updatePaymentStatus(receiptId: string, status: "confirmed" | "rejected") {
+    try {
+      const { error } = await supabase
+        .from("payment_receipts")
+        .update({
+          status,
+          confirmed_by: userId,
+          confirmed_at: new Date().toISOString(),
+        })
+        .eq("id", receiptId)
+
+      if (error) throw error
+      alert(status === "confirmed" ? t("payment_confirmed_toast") : t("payment_rejected_toast"))
+      await loadApplications()
+    } catch (error) {
+      console.error("[v0] Error updating payment status:", error)
       alert("Error: " + (error as Error).message)
     }
   }
@@ -591,6 +629,77 @@ export default function InboxPage() {
                               {t("current_deputy")}: {eligibleUsers.find((u) => u.user_id === conf.assigned_deputy_id)?.full_name || conf.assigned_deputy_id}
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {/* Payment receipts */}
+                      {conf.receipts && conf.receipts.length > 0 && (
+                        <div className="mb-6 p-4 border rounded-lg">
+                          <h4 className="font-semibold flex items-center gap-2 mb-3">
+                            <CreditCard className="w-4 h-4" />
+                            {t("payment_receipts_inbox")}
+                            <span className="text-sm font-normal text-muted-foreground">
+                              ({conf.receipts.length})
+                            </span>
+                          </h4>
+                          <div className="space-y-2">
+                            {conf.receipts.map((receipt) => (
+                              <div
+                                key={receipt.id}
+                                className="flex items-center gap-3 p-3 rounded-lg border bg-background flex-wrap"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {receipt.full_name || t("receipt_from")}
+                                  </p>
+                                  <a
+                                    href={receipt.receipt_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                    {t("view_receipt")}
+                                  </a>
+                                </div>
+                                {receipt.status === "confirmed" ? (
+                                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                                    <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                                    {t("payment_confirmed")}
+                                  </Badge>
+                                ) : receipt.status === "rejected" ? (
+                                  <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
+                                    <XCircle className="w-3.5 h-3.5 mr-1" />
+                                    {t("payment_rejected")}
+                                  </Badge>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                                      <Clock className="w-3.5 h-3.5 mr-1" />
+                                      {t("payment_submitted")}
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updatePaymentStatus(receipt.id, "confirmed")}
+                                      className="bg-green-600 hover:bg-green-700 h-8"
+                                    >
+                                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t("confirm_payment")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => updatePaymentStatus(receipt.id, "rejected")}
+                                      className="h-8"
+                                    >
+                                      <XCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t("reject_payment")}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
