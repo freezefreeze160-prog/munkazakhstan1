@@ -286,6 +286,15 @@ export const translations = {
     current_deputy: "Текущий ответственный",
     pending_conference_requests: "Конференции ожидают одобрения",
 
+    // Payment Details
+    payment_details: "Реквизиты для оплаты",
+    payment_bank: "Банк",
+    payment_card_number: "Номер карты/счёта",
+    payment_card_holder: "Имя получателя",
+    payment_instructions: "Инструкция по оплате",
+    select_bank: "Выберите банк",
+    payment_details_desc: "Укажите рекви��иты для оплаты регистрационного взноса",
+
     // Hall of Fame & Levels
     hall_of_fame: "Зал славы",
     hall_of_fame_desc: "Лучшие делегаты Казахстана",
@@ -592,6 +601,15 @@ export const translations = {
     current_deputy: "Қазіргі жауапты",
     pending_conference_requests: "Конференциялар мақұлдауды күтуде",
 
+    // Payment Details
+    payment_details: "Төлем деректемелері",
+    payment_bank: "Банк",
+    payment_card_number: "Карта/шот нөмірі",
+    payment_card_holder: "Алушының аты",
+    payment_instructions: "Төлем нұсқаулығы",
+    select_bank: "Банкті таңдаңыз",
+    payment_details_desc: "Тіркелу жарнасын төлеу үшін деректемелерді көрсетіңіз",
+
     // Hall of Fame & Levels
     hall_of_fame: "Даңқ залы",
     hall_of_fame_desc: "Қазақстанның үздік делегаттары",
@@ -896,6 +914,15 @@ export const translations = {
     deputy_assigned: "Responsible assigned!",
     current_deputy: "Current responsible",
     pending_conference_requests: "Conferences pending approval",
+
+    // Payment Details
+    payment_details: "Payment Details",
+    payment_bank: "Bank",
+    payment_card_number: "Card/Account number",
+    payment_card_holder: "Cardholder name",
+    payment_instructions: "Payment instructions",
+    select_bank: "Select bank",
+    payment_details_desc: "Provide payment details for the registration fee",
 
     // Hall of Fame & Levels
     hall_of_fame: "Hall of Fame",

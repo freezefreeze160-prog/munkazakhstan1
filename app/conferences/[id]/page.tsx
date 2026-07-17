@@ -9,7 +9,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Clock, ArrowLeft } from "lucide-react"
+import { Calendar, MapPin, Clock, ArrowLeft, CreditCard } from "lucide-react"
 
 interface Conference {
   id: string
@@ -29,6 +29,12 @@ interface Conference {
   conditions_kk: string
   conditions_en: string
   organizer_contact: string
+  registration_fee_amount: number | null
+  registration_fee_currency: string | null
+  payment_bank: string | null
+  payment_card_number: string | null
+  payment_card_holder: string | null
+  payment_instructions: string | null
 }
 
 export default function ConferenceDetailPage() {
@@ -161,6 +167,55 @@ export default function ConferenceDetailPage() {
                 <div>
                   <h3 className="font-semibold text-lg mb-2">{t("organizer_contact")}</h3>
                   <p className="text-muted-foreground">{conference.organizer_contact}</p>
+                </div>
+              )}
+
+              {/* Payment Details */}
+              {(conference.payment_bank || conference.payment_card_number) && (
+                <div className="border rounded-lg p-5 bg-muted/30">
+                  <div className="flex items-center gap-2 mb-4">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold text-lg">{t("payment_details")}</h3>
+                  </div>
+
+                  {conference.registration_fee_amount && (
+                    <div className="mb-3">
+                      <span className="text-sm text-muted-foreground">{t("registration_fee")}:</span>
+                      <p className="font-bold text-xl text-foreground">
+                        {conference.registration_fee_amount.toLocaleString()} {conference.registration_fee_currency || "KZT"}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {conference.payment_bank && (
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm text-muted-foreground">{t("payment_bank")}:</span>
+                        <span className="font-medium text-foreground">{conference.payment_bank}</span>
+                      </div>
+                    )}
+                    {conference.payment_card_number && (
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm text-muted-foreground">{t("payment_card_number")}:</span>
+                        <span className="font-mono font-medium text-foreground">{conference.payment_card_number}</span>
+                      </div>
+                    )}
+                    {conference.payment_card_holder && (
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-sm text-muted-foreground">{t("payment_card_holder")}:</span>
+                        <span className="font-medium text-foreground">{conference.payment_card_holder}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {conference.payment_instructions && (
+                    <div className="mt-4 p-3 bg-background rounded-md border">
+                      <span className="text-sm font-medium text-foreground">{t("payment_instructions")}:</span>
+                      <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                        {conference.payment_instructions}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
