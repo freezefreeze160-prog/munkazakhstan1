@@ -9,7 +9,8 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Clock, ArrowLeft, CreditCard } from "lucide-react"
+import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText } from "lucide-react"
+import { ConferenceDocuments } from "@/components/conference-documents"
 
 interface Conference {
   id: string
@@ -29,6 +30,7 @@ interface Conference {
   conditions_kk: string
   conditions_en: string
   organizer_contact: string
+  creator_id: string | null
   registration_fee_amount: number | null
   registration_fee_currency: string | null
   payment_bank: string | null
@@ -45,9 +47,11 @@ export default function ConferenceDetailPage() {
   const [conference, setConference] = useState<Conference | null>(null)
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  const [isOrganizer, setIsOrganizer] = useState(false)
 
   useEffect(() => {
     loadConference()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   async function loadConference() {
@@ -62,6 +66,21 @@ export default function ConferenceDetailPage() {
       if (error) throw error
 
       setConference(data)
+
+      if (user) {
+        const isCreator = data?.creator_id === user.id
+        let hasElevatedRole = false
+        if (!isCreator) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("user_id", user.id)
+            .maybeSingle()
+          hasElevatedRole =
+            profileData?.role === "founder" || profileData?.role === "general_secretary"
+        }
+        setIsOrganizer(isCreator || hasElevatedRole)
+      }
     } catch (error) {
       console.error("[v0] Error loading conference:", error)
     } finally {
@@ -169,6 +188,15 @@ export default function ConferenceDetailPage() {
                   <p className="text-muted-foreground">{conference.organizer_contact}</p>
                 </div>
               )}
+
+              {/* Documents: Background Guides & Position Papers */}
+              <div className="border rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-lg">{t("documents")}</h3>
+                </div>
+                <ConferenceDocuments conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
+              </div>
 
               {/* Payment Details */}
               {(conference.payment_bank || conference.payment_card_number) && (
