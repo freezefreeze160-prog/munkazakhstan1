@@ -57,8 +57,10 @@ export default function CreateConferencePage() {
     payment_card_number: "",
     payment_card_holder: "",
     payment_instructions: "",
+    poster_url: "",
     languages: [] as string[],
   })
+  const [posterUploading, setPosterUploading] = useState(false)
 
   useEffect(() => {
     checkPermissions()
@@ -76,11 +78,12 @@ export default function CreateConferencePage() {
 
       const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single()
 
-      // Only Founder and General Secretary can create conferences
-      // Deputies are assigned by their supervisors, not create themselves
+      // Founder, General Secretary and Admin can create conferences.
+      // Non-founders create a request (pending) that only a founder can approve.
       const allowed =
         profile?.role === "founder" ||
-        profile?.role === "general_secretary"
+        profile?.role === "general_secretary" ||
+        profile?.role === "admin"
 
       setCanCreate(allowed)
       setUserRole(profile?.role || "")
@@ -169,8 +172,33 @@ export default function CreateConferencePage() {
     setCommittees(updated)
   }
 
+  async function handlePosterUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPosterUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("folder", "posters")
+      const res = await fetch("/api/upload-blob", { method: "POST", body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Upload failed")
+      setFormData((f) => ({ ...f, poster_url: data.url }))
+    } catch (err) {
+      console.error("Poster upload error:", err)
+      alert((err as Error).message)
+    } finally {
+      setPosterUploading(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    if (!formData.poster_url) {
+      alert(t("poster_required"))
+      return
+    }
 
     const validCommittees = committees.filter((c) => c.name.trim() !== "")
     if (validCommittees.length === 0) {
@@ -214,6 +242,7 @@ export default function CreateConferencePage() {
           payment_card_number: formData.payment_card_number || null,
           payment_card_holder: formData.payment_card_holder || null,
           payment_instructions: formData.payment_instructions || null,
+          poster_url: formData.poster_url || null,
           languages: formData.languages,
           status: status,
           assigned_deputy_id: selectedDeputy || null,
@@ -260,6 +289,7 @@ export default function CreateConferencePage() {
         payment_card_number: "",
         payment_card_holder: "",
         payment_instructions: "",
+        poster_url: "",
         languages: [],
       })
       setCommittees([{ name: "", topic: "", capacity: 15, priority: 1, countries: [], languages: [] }])
@@ -332,6 +362,41 @@ export default function CreateConferencePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Poster (required) */}
+              <div className="grid gap-2">
+                <Label>{t("conference_poster")} *</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-28 h-40 rounded-lg overflow-hidden bg-muted flex items-center justify-center flex-shrink-0 border">
+                    {formData.poster_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={formData.poster_url} alt="poster" className="w-full h-full object-cover" />
+                    ) : (
+                      <Plus className="w-8 h-8 text-muted-foreground/40" />
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="poster-upload"
+                      onChange={handlePosterUpload}
+                      disabled={posterUploading}
+                    />
+                    <Button asChild type="button" variant="outline" size="sm" disabled={posterUploading}>
+                      <label htmlFor="poster-upload" className="cursor-pointer">
+                        {posterUploading
+                          ? t("uploading")
+                          : formData.poster_url
+                            ? t("change_poster")
+                            : t("upload_poster")}
+                      </label>
+                    </Button>
+                    <p className="text-xs text-muted-foreground">JPG / PNG</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="name">{t("conference_name")} *</Label>
                 <Input
