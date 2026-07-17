@@ -9,8 +9,9 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock, Download } from "lucide-react"
+import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock, Download, Award } from "lucide-react"
 import Link from "next/link"
+import { AWARD_TYPES, awardLabelKey, type AwardType } from "@/lib/awards"
 
 interface DelegateApplication {
   id: string
@@ -54,6 +55,12 @@ interface PaymentReceipt {
   created_at: string
 }
 
+interface ConferenceAward {
+  id: string
+  user_id: string
+  award_type: string
+}
+
 interface ConferenceWithApplications {
   id: string
   name_ru: string
@@ -65,6 +72,7 @@ interface ConferenceWithApplications {
   applications: DelegateApplication[]
   committees: Committee[]
   receipts: PaymentReceipt[]
+  awards: ConferenceAward[]
   status: string
   location: string
   registration_fee_amount: number | null
@@ -205,11 +213,17 @@ export default function InboxPage() {
               .eq("conference_id", conf.id)
               .order("created_at", { ascending: false })
 
+            const { data: awards } = await supabase
+              .from("conference_awards")
+              .select("id, user_id, award_type")
+              .eq("conference_id", conf.id)
+
             return {
               ...conf,
               applications: apps || [],
               committees: committeesData || [],
               receipts: receipts || [],
+              awards: awards || [],
             }
           }),
         )
@@ -342,6 +356,36 @@ export default function InboxPage() {
       await loadApplications()
     } catch (error) {
       console.error("[v0] Error updating application status:", error)
+      alert("Error: " + (error as Error).message)
+    }
+  }
+
+  async function assignAward(conferenceId: string, delegateUserId: string, awardType: string) {
+    try {
+      if (!awardType) {
+        // Remove any existing award for this delegate
+        const { error } = await supabase
+          .from("conference_awards")
+          .delete()
+          .eq("conference_id", conferenceId)
+          .eq("user_id", delegateUserId)
+        if (error) throw error
+      } else {
+        const { error } = await supabase.from("conference_awards").upsert(
+          {
+            conference_id: conferenceId,
+            user_id: delegateUserId,
+            award_type: awardType,
+            created_by: userId,
+          },
+          { onConflict: "conference_id,user_id" },
+        )
+        if (error) throw error
+      }
+      alert(t("award_assigned"))
+      await loadApplications()
+    } catch (error) {
+      console.error("[v0] Error assigning award:", error)
       alert("Error: " + (error as Error).message)
     }
   }
@@ -847,7 +891,7 @@ export default function InboxPage() {
                                   )}
 
                                   {/* Actions */}
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-2 items-center flex-wrap">
                                     {app.status === "pending" && (
                                       <>
                                         <Button
@@ -867,6 +911,27 @@ export default function InboxPage() {
                                           {t("reject")}
                                         </Button>
                                       </>
+                                    )}
+
+                                    {/* Award selector (for approved delegates) */}
+                                    {app.status === "approved" && (
+                                      <div className="flex items-center gap-2">
+                                        <Award className="w-4 h-4 text-yellow-600" />
+                                        <select
+                                          className="text-sm border rounded-md px-2 py-1.5 bg-background"
+                                          value={
+                                            conf.awards.find((a) => a.user_id === app.user_id)?.award_type || ""
+                                          }
+                                          onChange={(e) => assignAward(conf.id, app.user_id, e.target.value)}
+                                        >
+                                          <option value="">{t("no_award")}</option>
+                                          {AWARD_TYPES.map((type: AwardType) => (
+                                            <option key={type} value={type}>
+                                              {t(awardLabelKey(type) as never)}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
