@@ -49,6 +49,7 @@ export default function SecretariatPage() {
     const role = teamRole.toLowerCase()
     if (role.includes("founder")) return "founders"
     if (role.includes("content")) return "content"
+    if (role.includes("media")) return "media"
     if (role.includes("design")) return "designers"
     if (role.includes("partnership")) return "partnership"
     if (role.includes("marketing")) return "other"
@@ -59,6 +60,7 @@ export default function SecretariatPage() {
   const teamSections = {
     founders: profiles.filter(p => getTeamSection(p.team_role) === "founders"),
     content: profiles.filter(p => getTeamSection(p.team_role) === "content"),
+    media: profiles.filter(p => getTeamSection(p.team_role) === "media"),
     designers: profiles.filter(p => getTeamSection(p.team_role) === "designers"),
     partnership: profiles.filter(p => getTeamSection(p.team_role) === "partnership"),
     other: profiles.filter(p => getTeamSection(p.team_role) === "other"),
@@ -140,6 +142,7 @@ export default function SecretariatPage() {
             <div>
               {renderTeamSection(t("team_founders"), teamSections.founders)}
               {renderTeamSection(t("team_content_managers"), teamSections.content)}
+              {renderTeamSection(t("team_media"), teamSections.media)}
               {renderTeamSection(t("team_designers"), teamSections.designers)}
               {renderTeamSection(t("team_partnership_managers"), teamSections.partnership)}
               {teamSections.other.length > 0 && renderTeamSection(t("team_other"), teamSections.other)}

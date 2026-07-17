@@ -391,6 +391,12 @@ export default function AdminPanel() {
                           <SelectItem value="Lead Content Manager">
                             {language === "ru" ? "Главный контент менеджер" : language === "kk" ? "Бас контент менеджері" : "Lead Content Manager"}
                           </SelectItem>
+                          <SelectItem value="Head of Content">
+                            {language === "ru" ? "Глава контента" : language === "kk" ? "Контент басшысы" : "Head of Content"}
+                          </SelectItem>
+                          <SelectItem value="Co-head of Content">
+                            {language === "ru" ? "Со-глава контента" : language === "kk" ? "Контент қосалқы басшысы" : "Co-head of Content"}
+                          </SelectItem>
                           <SelectItem value="Designer">
                             {language === "ru" ? "Дизайнер" : language === "kk" ? "Дизайнер" : "Designer"}
                           </SelectItem>
@@ -402,6 +408,15 @@ export default function AdminPanel() {
                           </SelectItem>
                           <SelectItem value="Lead Partnership Manager">
                             {language === "ru" ? "Главный менеджер по партнёрству" : language === "kk" ? "Бас серіктестік менеджері" : "Lead Partnership Manager"}
+                          </SelectItem>
+                          <SelectItem value="Head of Partnership">
+                            {language === "ru" ? "Глава партнёрств" : language === "kk" ? "Серіктестік басшысы" : "Head of Partnership"}
+                          </SelectItem>
+                          <SelectItem value="Head of Media">
+                            {language === "ru" ? "Глава медиа" : language === "kk" ? "Медиа басшысы" : "Head of Media"}
+                          </SelectItem>
+                          <SelectItem value="Co-head of Media">
+                            {language === "ru" ? "Со-глава медиа" : language === "kk" ? "Медиа қосалқы басшысы" : "Co-head of Media"}
                           </SelectItem>
                           <SelectItem value="Marketing Manager">
                             {language === "ru" ? "Маркетинг менеджер" : language === "kk" ? "Маркетинг менеджері" : "Marketing Manager"}
