@@ -18,23 +18,30 @@ export default function SecretariatPage() {
 
   useEffect(() => {
     const fetchProfiles = async () => {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("is_team_member", true)
-        .order("created_at", { ascending: true })
+      try {
+        setLoading(true)
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("is_team_member", true)
+          .order("created_at", { ascending: true })
 
-      if (data && !error) {
-        setProfiles(data)
-      } else {
+        if (data && !error) {
+          setProfiles(data)
+        } else {
+          console.error("Error fetching team profiles:", error)
+          setProfiles([])
+        }
+      } catch (err) {
+        console.error("Network error fetching team profiles:", err)
         setProfiles([])
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     fetchProfiles()
-  }, [supabase])
+  }, [])
 
   // Group team members by section
   const getTeamSection = (teamRole: string | null | undefined): string => {

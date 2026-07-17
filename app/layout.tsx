@@ -11,7 +11,7 @@ const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
-  title: "MUNX Казахстан",
+  title: "MUN Kazakhstan",
   description: "Официальный сайт Model United Nations для школ Казахстана",
   generator: "v0.app",
 }

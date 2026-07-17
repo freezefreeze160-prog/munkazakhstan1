@@ -66,7 +66,7 @@ export default function NewsPage() {
     }
 
     fetchData()
-  }, [supabase])
+  }, [])
 
   const handleDelete = async (id: string) => {
     if (!confirm(t("confirm_delete_news"))) return

@@ -53,6 +53,10 @@ export default function CreateConferencePage() {
     organizer_contact: "",
     registration_fee_amount: "",
     registration_fee_currency: "KZT",
+    payment_bank: "",
+    payment_card_number: "",
+    payment_card_holder: "",
+    payment_instructions: "",
     languages: [] as string[],
   })
 
@@ -206,6 +210,10 @@ export default function CreateConferencePage() {
             ? Number.parseFloat(formData.registration_fee_amount)
             : null,
           registration_fee_currency: formData.registration_fee_currency,
+          payment_bank: formData.payment_bank || null,
+          payment_card_number: formData.payment_card_number || null,
+          payment_card_holder: formData.payment_card_holder || null,
+          payment_instructions: formData.payment_instructions || null,
           languages: formData.languages,
           status: status,
           assigned_deputy_id: selectedDeputy || null,
@@ -248,6 +256,10 @@ export default function CreateConferencePage() {
         organizer_contact: "",
         registration_fee_amount: "",
         registration_fee_currency: "KZT",
+        payment_bank: "",
+        payment_card_number: "",
+        payment_card_holder: "",
+        payment_instructions: "",
         languages: [],
       })
       setCommittees([{ name: "", topic: "", capacity: 15, priority: 1, countries: [], languages: [] }])
@@ -445,6 +457,73 @@ export default function CreateConferencePage() {
                       <SelectItem value="EUR">EUR</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Payment Details */}
+              <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                <Label className="text-base font-semibold">{t("payment_details")}</Label>
+                <p className="text-sm text-muted-foreground">{t("payment_details_desc")}</p>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="payment_bank">{t("payment_bank")}</Label>
+                  <Select
+                    value={formData.payment_bank}
+                    onValueChange={(value) => setFormData({ ...formData, payment_bank: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("select_bank")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Kaspi Bank">Kaspi Bank</SelectItem>
+                      <SelectItem value="Halyk Bank">Halyk Bank</SelectItem>
+                      <SelectItem value="Jusan Bank">Jusan Bank</SelectItem>
+                      <SelectItem value="Forte Bank">Forte Bank</SelectItem>
+                      <SelectItem value="Bereke Bank">Bereke Bank</SelectItem>
+                      <SelectItem value="Freedom Bank">Freedom Bank</SelectItem>
+                      <SelectItem value="Eurasian Bank">Eurasian Bank</SelectItem>
+                      <SelectItem value="other">
+                        {language === "ru" ? "Другой" : language === "kk" ? "Басқа" : "Other"}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="payment_card_number">{t("payment_card_number")}</Label>
+                  <Input
+                    id="payment_card_number"
+                    value={formData.payment_card_number}
+                    onChange={(e) => setFormData({ ...formData, payment_card_number: e.target.value })}
+                    placeholder="4400 0000 0000 0000"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="payment_card_holder">{t("payment_card_holder")}</Label>
+                  <Input
+                    id="payment_card_holder"
+                    value={formData.payment_card_holder}
+                    onChange={(e) => setFormData({ ...formData, payment_card_holder: e.target.value })}
+                    placeholder="IVANOV IVAN"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="payment_instructions">{t("payment_instructions")}</Label>
+                  <Textarea
+                    id="payment_instructions"
+                    value={formData.payment_instructions}
+                    onChange={(e) => setFormData({ ...formData, payment_instructions: e.target.value })}
+                    placeholder={
+                      language === "ru"
+                        ? "Например: Переведите на Kaspi Gold, в комментарии укажите ФИО и название конференции"
+                        : language === "kk"
+                          ? "Мысалы: Kaspi Gold-ға аударыңыз, түсініктемеде аты-жөніңіз бен конференция атауын жазыңыз"
+                          : "E.g.: Transfer to Kaspi Gold, include your full name and conference name in the comment"
+                    }
+                    rows={3}
+                  />
                 </div>
               </div>
 
