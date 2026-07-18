@@ -34,6 +34,7 @@ export function UserProfileView({ userId }: { userId: string }) {
   const { language, t } = useLanguage()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [email, setEmail] = useState<string>("")
+  const [isOwnProfile, setIsOwnProfile] = useState(false)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<Stats | null>(null)
   const supabase = createClient()
@@ -53,8 +54,10 @@ export function UserProfileView({ userId }: { userId: string }) {
           } = await supabase.auth.getUser()
 
           if (currentUser?.id === userId) {
+            setIsOwnProfile(true)
             setEmail(currentUser.email || "")
           } else {
+            setIsOwnProfile(false)
             setEmail("")
           }
 
@@ -182,29 +185,33 @@ export function UserProfileView({ userId }: { userId: string }) {
             </div>
           )}
 
-          <div>
-            <h3 className="text-lg font-semibold mb-3">{t("contact_info")}</h3>
-            <div className="space-y-2">
-              {profile.phone && (
+          {/* Contact info is private — visible only to the profile owner.
+              Other people see only bio and achievements. */}
+          {isOwnProfile && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">{t("contact_info")}</h3>
+              <div className="space-y-2">
+                {profile.phone && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="w-4 h-4" />
+                    <span>{profile.phone}</span>
+                  </div>
+                )}
+                {email && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="w-4 h-4" />
+                    <span>{email}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="w-4 h-4" />
-                  <span>{profile.phone}</span>
+                  <Calendar className="w-4 h-4" />
+                  <span>
+                    {t("member_since")} {new Date(profile.created_at).toLocaleDateString(language)}
+                  </span>
                 </div>
-              )}
-              {email && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="w-4 h-4" />
-                  <span>{email}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>
-                  {t("member_since")} {new Date(profile.created_at).toLocaleDateString(language)}
-                </span>
               </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
