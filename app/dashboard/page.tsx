@@ -15,6 +15,7 @@ import { useLanguage } from "@/contexts/language-context"
 import type { User } from "@supabase/supabase-js"
 import { Calendar, Home, UserCircle, Upload, Plus, FileText, Inbox } from "lucide-react"
 import type { UserProfile } from "@/lib/roles"
+import { resizeImage } from "@/lib/image-utils"
 import { getRoleBadgeColor, getRoleLabel } from "@/lib/roles"
 import { Input } from "@/components/ui/input"
 
@@ -212,8 +213,16 @@ export default function DashboardPage() {
 
     setIsUploading(true)
     try {
+      // Downscale to 1200px only for participants (to save storage/bandwidth).
+      // Staff roles (deputy, general_secretary, admin, founder) upload full-res.
+      let fileToUpload: Blob = file
+      if (profile?.role === "participant") {
+        fileToUpload = await resizeImage(file, 1200, 0.82)
+      }
+      const wasResized = fileToUpload !== file
+
       const formData = new FormData()
-      formData.append("file", file)
+      formData.append("file", fileToUpload, wasResized ? "avatar.jpg" : file.name)
 
       const response = await fetch("/api/upload-photo", {
         method: "POST",
