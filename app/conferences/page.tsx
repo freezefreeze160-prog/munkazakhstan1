@@ -9,7 +9,10 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Info } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar, MapPin, Info, Search } from "lucide-react"
+import { REGIONS } from "@/lib/roles"
 
 interface Conference {
   id: string
@@ -42,6 +45,8 @@ export default function ConferencesPage() {
   const [conferences, setConferences] = useState<Conference[]>([])
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  const [query, setQuery] = useState("")
+  const [cityFilter, setCityFilter] = useState("all")
 
   useEffect(() => {
     loadConferences()
@@ -82,22 +87,61 @@ export default function ConferencesPage() {
     return language === "ru" ? conf.description_ru : language === "kk" ? conf.description_kk : conf.description_en
   }
 
+  // Cities that actually have conferences (for the filter dropdown)
+  const cityNums = Array.from(new Set(conferences.map((c) => String(c.city)).filter((v) => v && v !== "null")))
+
+  const filtered = conferences.filter((c) => {
+    const matchesQuery =
+      !query.trim() || getConferenceName(c).toLowerCase().includes(query.trim().toLowerCase())
+    const matchesCity = cityFilter === "all" || String(c.city) === cityFilter
+    return matchesQuery && matchesCity
+  })
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-4xl font-bold mb-2">{t("all_conferences")}</h1>
             <p className="text-muted-foreground">{t("available_conferences")}</p>
           </div>
+
+          {/* Search + city filter */}
+          {!loading && conferences.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-3 mb-8">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("search_conferences")}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={cityFilter} onValueChange={setCityFilter}>
+                <SelectTrigger className="w-full sm:w-56">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("all_cities")}</SelectItem>
+                  {cityNums.map((num) => (
+                    <SelectItem key={num} value={num}>
+                      {REGIONS[Number(num) as keyof typeof REGIONS]?.[language] || num}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {loading ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">{t("loading")}</p>
             </div>
-          ) : conferences.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground mb-4">{t("no_conferences")}</p>
@@ -105,7 +149,7 @@ export default function ConferencesPage() {
             </Card>
           ) : (
             <div className="grid gap-6 md:grid-cols-2">
-              {conferences.map((conf) => (
+              {filtered.map((conf) => (
                 <Card key={conf.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-row">
                   {/* Poster */}
                   <Link

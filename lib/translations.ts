@@ -55,6 +55,8 @@ export const translations = {
     conference_updated: "Конференция обновлена",
     save_changes: "Сохранить изменения",
     all_conferences_admin: "Все конференции",
+    all_cities: "Все города",
+    search_conferences: "Поиск конференций...",
 
     // Auth
     login_desc: "Войдите в свой аккаунт",
@@ -501,6 +503,8 @@ export const translations = {
     conference_updated: "Конференция жаңартылды",
     save_changes: "Өзгерістерді сақтау",
     all_conferences_admin: "Барлық конференциялар",
+    all_cities: "Барлық қалалар",
+    search_conferences: "Конференцияларды іздеу...",
 
     // Auth
     login_desc: "Аккаунтқа кіріңіз",
@@ -945,6 +949,8 @@ export const translations = {
     conference_updated: "Conference updated",
     save_changes: "Save changes",
     all_conferences_admin: "All conferences",
+    all_cities: "All cities",
+    search_conferences: "Search conferences...",
 
     // Auth
     login_desc: "Login to your account",
