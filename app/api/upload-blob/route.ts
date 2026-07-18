@@ -4,16 +4,17 @@ import { createClient } from "@/lib/supabase/server"
 // Generic authenticated file upload to Supabase Storage.
 // Used for payment receipts, gallery photos, and certificate templates.
 const BUCKET = "uploads"
-const ALLOWED_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/webp",
-  "image/gif",
-  "application/pdf",
-]
-const ALLOWED_EXT = ["png", "jpg", "jpeg", "webp", "gif", "pdf"]
+// Accept any image (incl. iPhone HEIC/HEIF) plus PDF.
+const ALLOWED_EXT = ["png", "jpg", "jpeg", "webp", "gif", "heic", "heif", "jfif", "bmp", "avif", "pdf"]
 const MAX_SIZE = 15 * 1024 * 1024 // 15MB
+
+function isAllowed(file: File): boolean {
+  const type = (file.type || "").toLowerCase()
+  if (type.startsWith("image/")) return true
+  if (type === "application/pdf") return true
+  const ext = file.name.split(".").pop()?.toLowerCase() || ""
+  return ALLOWED_EXT.includes(ext)
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,8 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    const ext = file.name.split(".").pop()?.toLowerCase() || ""
-    if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXT.includes(ext)) {
+    if (!isAllowed(file)) {
       return NextResponse.json({ error: "File must be an image or PDF" }, { status: 400 })
     }
     if (file.size > MAX_SIZE) {
