@@ -278,6 +278,8 @@ export const translations = {
     error_name_required: "Имя обязательно",
     login_error: "Ошибка входа",
     error_generic: "Произошла ошибка",
+    error_creating_account: "Не удалось создать аккаунт. Попробуйте ещё раз.",
+    error_email_invalid: "Неверный формат email",
 
     // Dashboard (previously hardcoded)
     my_conferences_and_applications: "Мои конференции и заявки",
@@ -721,6 +723,8 @@ export const translations = {
     error_name_required: "Аты міндетті",
     login_error: "Кіру қатесі",
     error_generic: "Қате орын алды",
+    error_creating_account: "Аккаунт жасау мүмкін болмады. Қайталап көріңіз.",
+    error_email_invalid: "Email форматы қате",
 
     // Dashboard (previously hardcoded)
     my_conferences_and_applications: "Менің конференцияларым және өтінімдерім",
@@ -1163,6 +1167,8 @@ export const translations = {
     error_name_required: "Name is required",
     login_error: "Login error",
     error_generic: "An error occurred",
+    error_creating_account: "Could not create account. Please try again.",
+    error_email_invalid: "Invalid email format",
 
     // Dashboard (previously hardcoded)
     my_conferences_and_applications: "My conferences and applications",

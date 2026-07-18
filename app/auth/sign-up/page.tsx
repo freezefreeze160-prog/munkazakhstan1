@@ -66,7 +66,8 @@ export default function SignUpPage() {
 
       const result = await signUpAction(email, password, fullName, phone)
       if (result.success) {
-        router.push("/auth/sign-up-success")
+        router.push("/dashboard")
+        router.refresh()
       } else {
         setError(result.error ? t(result.error as any) : t("error_creating_account"))
       }
