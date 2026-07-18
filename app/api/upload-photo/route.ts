@@ -2,6 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
 const BUCKET = "uploads"
+const IMAGE_EXT = ["png", "jpg", "jpeg", "webp", "gif", "heic", "heif", "jfif", "bmp", "avif"]
+
+function isImage(file: File): boolean {
+  const type = (file.type || "").toLowerCase()
+  if (type.startsWith("image/")) return true
+  const ext = file.name.split(".").pop()?.toLowerCase() || ""
+  return IMAGE_EXT.includes(ext)
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,11 +29,11 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
-    if (!file.type.startsWith("image/")) {
+    if (!isImage(file)) {
       return NextResponse.json({ error: "File must be an image" }, { status: 400 })
     }
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "File size must be less than 5MB" }, { status: 400 })
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "File size must be less than 10MB" }, { status: 400 })
     }
 
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg"
@@ -33,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
-      .upload(path, file, { contentType: file.type, upsert: true })
+      .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: true })
 
     if (uploadError) {
       console.error("Storage upload error:", uploadError)
