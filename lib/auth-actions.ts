@@ -36,7 +36,7 @@ export async function signUpAction(
     // Only founder email gets founder role, everyone else is participant
     const actualRole: UserRole = (FOUNDER_EMAIL && email === FOUNDER_EMAIL) ? "founder" : "participant"
 
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -52,16 +52,25 @@ export async function signUpAction(
       if (error.message.includes("already registered") || error.message.includes("already been registered")) {
         return { success: false, error: "error_email_exists" }
       }
-      return { success: false, error: "error_creating_account" }
+      // Ignore email-related errors (e.g. "email rate limit exceeded"): the
+      // user is still created and auto-confirmed by the DB trigger, so we can
+      // sign them in below. Only bail out on non-email errors.
+      const msg = error.message.toLowerCase()
+      const isEmailIssue = msg.includes("email") || msg.includes("rate limit") || msg.includes("confirm")
+      if (!isEmailIssue) {
+        return { success: false, error: "error_creating_account" }
+      }
     }
 
-    // If user is null but no error, email confirmation is required
-    if (!data.user) {
+    // Sign the user in right away (no email confirmation needed) so they land
+    // on the site with a session.
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError || !signInData.user) {
       return { success: false, error: "error_creating_account" }
     }
 
     revalidatePath("/", "layout")
-    return { success: true, user: data.user }
+    return { success: true, user: signInData.user }
   } catch (error) {
     return { success: false, error: "error_generic" }
   }
