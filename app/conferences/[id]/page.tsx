@@ -9,7 +9,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText, Bookmark, BookmarkCheck } from "lucide-react"
+import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText, Bookmark, BookmarkCheck, Pencil } from "lucide-react"
 import { ConferenceDocuments } from "@/components/conference-documents"
 import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 import { ConferenceGallery } from "@/components/conference-gallery"
@@ -83,7 +83,9 @@ export default function ConferenceDetailPage() {
             .eq("user_id", user.id)
             .maybeSingle()
           hasElevatedRole =
-            profileData?.role === "founder" || profileData?.role === "general_secretary"
+            profileData?.role === "founder" ||
+            profileData?.role === "general_secretary" ||
+            profileData?.role === "admin"
         }
         setIsOrganizer(isCreator || hasElevatedRole)
 
@@ -268,6 +270,14 @@ export default function ConferenceDetailPage() {
                       </>
                     )}
                   </Button>
+                  {isOrganizer && (
+                    <Button asChild size="lg" variant="outline">
+                      <Link href={`/conferences/${conference.id}/edit`}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        {t("edit_conference")}
+                      </Link>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

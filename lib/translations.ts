@@ -51,6 +51,10 @@ export const translations = {
     my_favorites: "Избранные конференции",
     no_favorites: "У вас пока нет избранных конференций",
     no_permission_create_conference: "У вас нет прав на создание конференции",
+    edit_conference: "Редактировать конференцию",
+    conference_updated: "Конференция обновлена",
+    save_changes: "Сохранить изменения",
+    all_conferences_admin: "Все конференции",
 
     // Auth
     login_desc: "Войдите в свой аккаунт",
@@ -491,6 +495,10 @@ export const translations = {
     my_favorites: "Таңдаулы конференциялар",
     no_favorites: "Сізде әзірге таңдаулы конференциялар жоқ",
     no_permission_create_conference: "Сізде конференция құру құқығы жоқ",
+    edit_conference: "Конференцияны өңдеу",
+    conference_updated: "Конференция жаңартылды",
+    save_changes: "Өзгерістерді сақтау",
+    all_conferences_admin: "Барлық конференциялар",
 
     // Auth
     login_desc: "Аккаунтқа кіріңіз",
@@ -929,6 +937,10 @@ export const translations = {
     my_favorites: "Favorite conferences",
     no_favorites: "You have no favorite conferences yet",
     no_permission_create_conference: "You don't have permission to create a conference",
+    edit_conference: "Edit conference",
+    conference_updated: "Conference updated",
+    save_changes: "Save changes",
+    all_conferences_admin: "All conferences",
 
     // Auth
     login_desc: "Login to your account",

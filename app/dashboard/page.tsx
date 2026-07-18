@@ -131,12 +131,19 @@ export default function DashboardPage() {
           setFavorites(favs.map((f: any) => f.user_conferences).filter(Boolean))
         }
 
-        if (profileData?.role === "general_secretary" || profileData?.role === "founder") {
-          const { data: conferencesData } = await supabase
-            .from("user_conferences")
-            .select("*")
-            .eq("creator_id", user.id)
-            .order("created_at", { ascending: false })
+        if (
+          profileData?.role === "general_secretary" ||
+          profileData?.role === "founder" ||
+          profileData?.role === "admin"
+        ) {
+          // Founders and admins see ALL conferences (to manage/edit/delete any);
+          // general secretaries see only their own.
+          const seesAll = profileData?.role === "founder" || profileData?.role === "admin"
+          let confQuery = supabase.from("user_conferences").select("*").order("created_at", { ascending: false })
+          if (!seesAll) {
+            confQuery = confQuery.eq("creator_id", user.id)
+          }
+          const { data: conferencesData } = await confQuery
 
           if (conferencesData) {
             const conferencesWithApps = await Promise.all(
@@ -232,9 +239,15 @@ export default function DashboardPage() {
   }
 
   const canCreateConference =
-    profile?.role === "general_secretary" || profile?.role === "deputy" || profile?.role === "founder"
+    profile?.role === "general_secretary" ||
+    profile?.role === "deputy" ||
+    profile?.role === "founder" ||
+    profile?.role === "admin"
 
-  const isGenSecOrFounder = profile?.role === "general_secretary" || profile?.role === "founder"
+  const isGenSecOrFounder =
+    profile?.role === "general_secretary" || profile?.role === "founder" || profile?.role === "admin"
+
+  const isFounderOrAdmin = profile?.role === "founder" || profile?.role === "admin"
 
   async function handleDeleteConference(conferenceId: string, conferenceName: string) {
     if (!confirm(`${t("confirm_delete_conference")}\n\n${conferenceName}`)) {
@@ -529,7 +542,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                {t("my_conferences_and_applications")}
+                {isFounderOrAdmin ? t("all_conferences_admin") : t("my_conferences_and_applications")}
               </CardTitle>
               <CardDescription>
                 {myConferences.length} {t("conference")}
@@ -561,7 +574,7 @@ export default function DashboardPage() {
                         >
                           {conf.registration_open ? t("registration_open") : t("registration_closed")}
                         </span>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap justify-end">
                           <Button
                             size="sm"
                             variant={conf.registration_open ? "destructive" : "default"}
@@ -569,6 +582,9 @@ export default function DashboardPage() {
                             className={!conf.registration_open ? "bg-green-600 hover:bg-green-700" : ""}
                           >
                             {conf.registration_open ? t("close_registration") : t("open_registration")}
+                          </Button>
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/conferences/${conf.id}/edit`}>{t("edit_conference")}</Link>
                           </Button>
                           <Button
                             variant="destructive"
