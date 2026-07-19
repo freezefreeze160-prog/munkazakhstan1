@@ -458,6 +458,10 @@ export const translations = {
     email_country_label: "Страна",
     email_view_conference: "Открыть конференцию",
     email_footer_tagline: "Model United Nations Kazakhstan",
+    notif_payment_confirmed_title: "Оплата подтверждена ✅",
+    notif_payment_rejected_title: "Оплата отклонена",
+    email_payment_confirmed_body: "Ваш платёж за участие в конференции подтверждён организатором. Всё готово — ждём вас на конференции!",
+    email_payment_rejected_body: "К сожалению, ваш чек об оплате не был подтверждён. Пожалуйста, проверьте данные и загрузите чек заново на странице конференции.",
 
     // Notifications
     notifications: "Уведомления",
@@ -922,6 +926,10 @@ export const translations = {
     email_country_label: "Ел",
     email_view_conference: "Конференцияны ашу",
     email_footer_tagline: "Model United Nations Kazakhstan",
+    notif_payment_confirmed_title: "Төлем расталды ✅",
+    notif_payment_rejected_title: "Төлем қабылданбады",
+    email_payment_confirmed_body: "Конференцияға қатысу төлеміңіз ұйымдастырушымен расталды. Барлығы дайын — сізді конференцияда күтеміз!",
+    email_payment_rejected_body: "Өкінішке орай, төлем түбіртегіңіз расталмады. Мәліметтерді тексеріп, түбіртекті конференция бетінде қайта жүктеңіз.",
 
     // Notifications
     notifications: "Хабарландырулар",
@@ -1385,6 +1393,10 @@ export const translations = {
     email_country_label: "Country",
     email_view_conference: "Open conference",
     email_footer_tagline: "Model United Nations Kazakhstan",
+    notif_payment_confirmed_title: "Payment confirmed ✅",
+    notif_payment_rejected_title: "Payment declined",
+    email_payment_confirmed_body: "Your conference registration payment has been confirmed by the organizer. You're all set — see you at the conference!",
+    email_payment_rejected_body: "Unfortunately, your payment receipt could not be confirmed. Please check the details and re-upload your receipt on the conference page.",
 
     // Notifications
     notifications: "Notifications",

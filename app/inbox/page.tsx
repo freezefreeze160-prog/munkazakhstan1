@@ -455,7 +455,11 @@ export default function InboxPage() {
     }
   }
 
-  async function updatePaymentStatus(receiptId: string, status: "confirmed" | "rejected") {
+  async function updatePaymentStatus(
+    receipt: PaymentReceipt,
+    conf: ConferenceWithApplications,
+    status: "confirmed" | "rejected",
+  ) {
     try {
       const { error } = await supabase
         .from("payment_receipts")
@@ -464,9 +468,48 @@ export default function InboxPage() {
           confirmed_by: userId,
           confirmed_at: new Date().toISOString(),
         })
-        .eq("id", receiptId)
+        .eq("id", receipt.id)
 
       if (error) throw error
+
+      // Notify the delegate (in-app + best-effort email)
+      if (receipt.user_id) {
+        const confName = getConferenceName(conf)
+        const title =
+          status === "confirmed" ? t("notif_payment_confirmed_title") : t("notif_payment_rejected_title")
+        const emailBody =
+          status === "confirmed" ? t("email_payment_confirmed_body") : t("email_payment_rejected_body")
+
+        await supabase.from("notifications").insert({
+          user_id: receipt.user_id,
+          type: "payment_status",
+          title,
+          body: confName,
+          data: { conference_id: conf.id, status },
+        })
+
+        // Recipient email comes from their application to this conference
+        const email = conf.applications.find((a) => a.user_id === receipt.user_id)?.email
+        if (email) {
+          const html = buildStatusEmail({
+            delegateName: receipt.full_name,
+            conferenceName: confName,
+            status: status === "confirmed" ? "approved" : "rejected",
+            heading: title,
+            message: emailBody,
+            footerNote: t("email_footer_tagline"),
+            ctaLabel: status === "confirmed" ? t("email_view_conference") : undefined,
+            ctaUrl:
+              status === "confirmed" ? `${window.location.origin}/conferences/${conf.id}` : undefined,
+          })
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: email, subject: `${title} — ${confName}`, html }),
+          }).catch(() => {})
+        }
+      }
+
       alert(status === "confirmed" ? t("payment_confirmed_toast") : t("payment_rejected_toast"))
       await loadApplications()
     } catch (error) {
@@ -853,7 +896,7 @@ export default function InboxPage() {
                                     </Badge>
                                     <Button
                                       size="sm"
-                                      onClick={() => updatePaymentStatus(receipt.id, "confirmed")}
+                                      onClick={() => updatePaymentStatus(receipt, conf, "confirmed")}
                                       className="bg-green-600 hover:bg-green-700 h-8"
                                     >
                                       <CheckCircle className="h-3.5 w-3.5 mr-1" />
@@ -862,7 +905,7 @@ export default function InboxPage() {
                                     <Button
                                       size="sm"
                                       variant="destructive"
-                                      onClick={() => updatePaymentStatus(receipt.id, "rejected")}
+                                      onClick={() => updatePaymentStatus(receipt, conf, "rejected")}
                                       className="h-8"
                                     >
                                       <XCircle className="h-3.5 w-3.5 mr-1" />
