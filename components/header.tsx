@@ -151,6 +151,10 @@ export function Header() {
               </DropdownItem>
             </NavDropdown>
 
+            <Link href="/conferences" className="text-foreground hover:text-primary font-medium transition-colors">
+              {t("all_conferences")}
+            </Link>
+
             <Link href="/register" className="text-foreground hover:text-primary font-medium transition-colors">
               {t("register")}
             </Link>
@@ -253,6 +257,9 @@ export function Header() {
           </Link>
           <Link href="/news" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
             {t("news")}
+          </Link>
+          <Link href="/conferences" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
+            {t("all_conferences")}
           </Link>
           <Link href="/register" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
             {t("register")}

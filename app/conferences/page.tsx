@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, MapPin, Info, Search } from "lucide-react"
+import { Calendar, MapPin, Info, Search, DollarSign, ArrowDownUp } from "lucide-react"
 import { REGIONS } from "@/lib/roles"
 
 interface Conference {
@@ -36,6 +36,9 @@ interface Conference {
   created_at: string
   status: string // Assuming status is a field in the Conference interface
   poster_url: string | null
+  registration_fee_amount: number | null
+  registration_fee_currency: string | null
+  date_start: string | null
 }
 
 export default function ConferencesPage() {
@@ -47,6 +50,8 @@ export default function ConferencesPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [query, setQuery] = useState("")
   const [cityFilter, setCityFilter] = useState("all")
+  const [feeFilter, setFeeFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("newest")
 
   useEffect(() => {
     loadConferences()
@@ -90,12 +95,29 @@ export default function ConferencesPage() {
   // Cities that actually have conferences (for the filter dropdown)
   const cityNums = Array.from(new Set(conferences.map((c) => String(c.city)).filter((v) => v && v !== "null")))
 
-  const filtered = conferences.filter((c) => {
-    const matchesQuery =
-      !query.trim() || getConferenceName(c).toLowerCase().includes(query.trim().toLowerCase())
-    const matchesCity = cityFilter === "all" || String(c.city) === cityFilter
-    return matchesQuery && matchesCity
-  })
+  const filtered = conferences
+    .filter((c) => {
+      const matchesQuery =
+        !query.trim() || getConferenceName(c).toLowerCase().includes(query.trim().toLowerCase())
+      const matchesCity = cityFilter === "all" || String(c.city) === cityFilter
+      const fee = Number(c.registration_fee_amount) || 0
+      const matchesFee =
+        feeFilter === "all" || (feeFilter === "free" ? fee <= 0 : fee > 0)
+      return matchesQuery && matchesCity && matchesFee
+    })
+    .sort((a, b) => {
+      if (sortBy === "date") {
+        // Upcoming first; conferences without a start date go last
+        if (!a.date_start) return 1
+        if (!b.date_start) return -1
+        return a.date_start.localeCompare(b.date_start)
+      }
+      if (sortBy === "fee_asc") {
+        return (Number(a.registration_fee_amount) || 0) - (Number(b.registration_fee_amount) || 0)
+      }
+      // newest (default): most recently created first
+      return (b.created_at || "").localeCompare(a.created_at || "")
+    })
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -110,8 +132,8 @@ export default function ConferencesPage() {
 
           {/* Search + city filter */}
           {!loading && conferences.length > 0 && (
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
-              <div className="relative flex-1">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-8">
+              <div className="relative flex-1 sm:min-w-[220px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   value={query}
@@ -121,7 +143,7 @@ export default function ConferencesPage() {
                 />
               </div>
               <Select value={cityFilter} onValueChange={setCityFilter}>
-                <SelectTrigger className="w-full sm:w-56">
+                <SelectTrigger className="w-full sm:w-48">
                   <MapPin className="w-4 h-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
@@ -132,6 +154,28 @@ export default function ConferencesPage() {
                       {REGIONS[Number(num) as keyof typeof REGIONS]?.[language] || num}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select value={feeFilter} onValueChange={setFeeFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("fee_all")}</SelectItem>
+                  <SelectItem value="free">{t("fee_free")}</SelectItem>
+                  <SelectItem value="paid">{t("fee_paid")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <ArrowDownUp className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">{t("sort_newest")}</SelectItem>
+                  <SelectItem value="date">{t("sort_by_date")}</SelectItem>
+                  <SelectItem value="fee_asc">{t("sort_by_fee")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

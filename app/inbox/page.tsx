@@ -12,7 +12,20 @@ import { Badge } from "@/components/ui/badge"
 import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock, Download, Award } from "lucide-react"
 import Link from "next/link"
 import { AWARD_TYPES, awardLabelKey, type AwardType } from "@/lib/awards"
-import { buildStatusEmail } from "@/lib/email-templates"
+import { buildStatusEmail, buildAnnouncementEmail } from "@/lib/email-templates"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Megaphone, FileSpreadsheet } from "lucide-react"
 
 interface DelegateApplication {
   id: string
@@ -92,11 +105,156 @@ export default function InboxPage() {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [eligibleUsers, setEligibleUsers] = useState<EligibleUser[]>([])
+  const [broadcastConf, setBroadcastConf] = useState<ConferenceWithApplications | null>(null)
+  const [broadcastSubject, setBroadcastSubject] = useState("")
+  const [broadcastMessage, setBroadcastMessage] = useState("")
+  const [broadcastEmail, setBroadcastEmail] = useState(true)
+  const [broadcastAudience, setBroadcastAudience] = useState<"approved" | "all">("approved")
+  const [sendingBroadcast, setSendingBroadcast] = useState(false)
 
   useEffect(() => {
     loadApplications()
     loadEligibleUsers()
   }, [])
+
+  async function sendBroadcast() {
+    if (!broadcastConf) return
+    if (!broadcastMessage.trim()) {
+      alert(t("broadcast_message_required"))
+      return
+    }
+    setSendingBroadcast(true)
+    try {
+      const recipients = broadcastConf.applications.filter((a) =>
+        broadcastAudience === "all" ? true : a.status === "approved",
+      )
+      if (recipients.length === 0) {
+        alert(t("broadcast_no_recipients"))
+        setSendingBroadcast(false)
+        return
+      }
+      const confName = getConferenceName(broadcastConf)
+      const subject = broadcastSubject.trim() || t("announcement")
+
+      // In-app notifications
+      const notifs = recipients
+        .filter((r) => r.user_id)
+        .map((r) => ({
+          user_id: r.user_id,
+          type: "announcement",
+          title: subject,
+          body: broadcastMessage.trim(),
+          data: { conference_id: broadcastConf.id },
+        }))
+      if (notifs.length) await supabase.from("notifications").insert(notifs)
+
+      // Emails (best-effort)
+      if (broadcastEmail) {
+        const html = buildAnnouncementEmail({
+          conferenceName: confName,
+          subject,
+          message: broadcastMessage.trim(),
+          ctaLabel: t("email_view_conference"),
+          ctaUrl: `${window.location.origin}/conferences/${broadcastConf.id}`,
+          footerNote: t("email_footer_tagline"),
+        })
+        await Promise.all(
+          recipients
+            .filter((r) => r.email)
+            .map((r) =>
+              fetch("/api/send-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ to: r.email, subject: `${subject} — ${confName}`, html }),
+              }).catch(() => {}),
+            ),
+        )
+      }
+
+      alert(t("broadcast_sent"))
+      setBroadcastConf(null)
+      setBroadcastSubject("")
+      setBroadcastMessage("")
+    } catch (error) {
+      console.error("[v0] Error sending broadcast:", error)
+      alert("Error: " + (error as Error).message)
+    } finally {
+      setSendingBroadcast(false)
+    }
+  }
+
+  function exportApplicationsExcel(conf: ConferenceWithApplications) {
+    if (conf.applications.length === 0) {
+      alert(t("export_no_data"))
+      return
+    }
+    const committeeName = (id: string | null) => conf.committees.find((c) => c.id === id)?.name || ""
+    const esc = (v: unknown) =>
+      String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+    const headers = [
+      "№",
+      t("full_name"),
+      t("email"),
+      t("phone"),
+      t("assigned_country"),
+      t("assigned_committee"),
+      t("status"),
+    ]
+    const bodyRows = conf.applications
+      .map((app, i) => {
+        const cells = [
+          String(i + 1),
+          app.full_name,
+          app.email,
+          app.phone,
+          app.assigned_country || "",
+          committeeName(app.assigned_committee_id),
+          t(app.status as never) || app.status,
+        ]
+        return `<tr>${cells
+          .map(
+            (c, ci) =>
+              `<td style="border:1px solid #cbd5e1;padding:6px 10px;font-size:13px;${
+                ci === 0 ? "text-align:center;color:#64748b;" : ""
+              }mso-number-format:'\\@';">${esc(c)}</td>`,
+          )
+          .join("")}</tr>`
+      })
+      .join("")
+    const headRow = `<tr>${headers
+      .map(
+        (h) =>
+          `<th style="background:#2563eb;color:#ffffff;border:1px solid #1e40af;padding:8px 10px;font-size:13px;font-weight:700;text-align:left;">${esc(
+            h,
+          )}</th>`,
+      )
+      .join("")}</tr>`
+    const title = getConferenceName(conf)
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${esc(
+      title,
+    ).slice(0, 28)}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+<body>
+<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;">
+<caption style="text-align:left;font-size:16px;font-weight:700;padding:8px 0;">${esc(title)}</caption>
+<thead>${headRow}</thead>
+<tbody>${bodyRows}</tbody>
+</table>
+</body></html>`
+    const blob = new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    const safeName = title.replace(/[^a-zA-Z0-9а-яА-Я_-]+/g, "_")
+    link.download = `${safeName || "participants"}.xls`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
 
   async function loadEligibleUsers() {
     const { data } = await supabase
@@ -786,10 +944,30 @@ export default function InboxPage() {
                           </CardDescription>
                         </div>
                         {conf.applications.length > 0 && (
-                          <Button size="sm" variant="outline" onClick={() => exportApplicationsCsv(conf)}>
-                            <Download className="w-4 h-4 mr-2" />
-                            {t("export_csv")}
-                          </Button>
+                          <div className="flex gap-2 flex-wrap">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setBroadcastConf(conf)
+                                setBroadcastSubject("")
+                                setBroadcastMessage("")
+                                setBroadcastAudience("approved")
+                                setBroadcastEmail(true)
+                              }}
+                            >
+                              <Megaphone className="w-4 h-4 mr-2" />
+                              {t("broadcast")}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => exportApplicationsExcel(conf)}>
+                              <FileSpreadsheet className="w-4 h-4 mr-2" />
+                              {t("export_excel")}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => exportApplicationsCsv(conf)}>
+                              <Download className="w-4 h-4 mr-2" />
+                              {t("export_csv")}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </CardHeader>
@@ -1055,6 +1233,86 @@ export default function InboxPage() {
           )}
         </div>
       </main>
+
+      {/* Broadcast dialog */}
+      <Dialog open={!!broadcastConf} onOpenChange={(open) => !open && setBroadcastConf(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-primary" />
+              {t("broadcast_title")}
+            </DialogTitle>
+            <DialogDescription>
+              {broadcastConf ? getConferenceName(broadcastConf) : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label>{t("broadcast_audience")}</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={broadcastAudience === "approved" ? "default" : "outline"}
+                  onClick={() => setBroadcastAudience("approved")}
+                >
+                  {t("broadcast_approved_only")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={broadcastAudience === "all" ? "default" : "outline"}
+                  onClick={() => setBroadcastAudience("all")}
+                >
+                  {t("broadcast_all_applicants")}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>{t("broadcast_subject")}</Label>
+              <Input
+                value={broadcastSubject}
+                onChange={(e) => setBroadcastSubject(e.target.value)}
+                placeholder={t("broadcast_subject_placeholder")}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>{t("broadcast_message")}</Label>
+              <Textarea
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                placeholder={t("broadcast_message_placeholder")}
+                rows={5}
+              />
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={broadcastEmail}
+                onCheckedChange={(v) => setBroadcastEmail(Boolean(v))}
+              />
+              <span className="text-sm">{t("broadcast_also_email")}</span>
+            </label>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBroadcastConf(null)}>
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={sendBroadcast}
+              disabled={sendingBroadcast}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Megaphone className="w-4 h-4 mr-2" />
+              {sendingBroadcast ? t("broadcast_sending") : t("broadcast_send")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
