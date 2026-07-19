@@ -12,6 +12,20 @@ import { Badge } from "@/components/ui/badge"
 import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock, Download, Award } from "lucide-react"
 import Link from "next/link"
 import { AWARD_TYPES, awardLabelKey, type AwardType } from "@/lib/awards"
+import { buildStatusEmail, buildAnnouncementEmail } from "@/lib/email-templates"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Megaphone, FileSpreadsheet } from "lucide-react"
 
 interface DelegateApplication {
   id: string
@@ -91,11 +105,156 @@ export default function InboxPage() {
   const [userRole, setUserRole] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [eligibleUsers, setEligibleUsers] = useState<EligibleUser[]>([])
+  const [broadcastConf, setBroadcastConf] = useState<ConferenceWithApplications | null>(null)
+  const [broadcastSubject, setBroadcastSubject] = useState("")
+  const [broadcastMessage, setBroadcastMessage] = useState("")
+  const [broadcastEmail, setBroadcastEmail] = useState(true)
+  const [broadcastAudience, setBroadcastAudience] = useState<"approved" | "all">("approved")
+  const [sendingBroadcast, setSendingBroadcast] = useState(false)
 
   useEffect(() => {
     loadApplications()
     loadEligibleUsers()
   }, [])
+
+  async function sendBroadcast() {
+    if (!broadcastConf) return
+    if (!broadcastMessage.trim()) {
+      alert(t("broadcast_message_required"))
+      return
+    }
+    setSendingBroadcast(true)
+    try {
+      const recipients = broadcastConf.applications.filter((a) =>
+        broadcastAudience === "all" ? true : a.status === "approved",
+      )
+      if (recipients.length === 0) {
+        alert(t("broadcast_no_recipients"))
+        setSendingBroadcast(false)
+        return
+      }
+      const confName = getConferenceName(broadcastConf)
+      const subject = broadcastSubject.trim() || t("announcement")
+
+      // In-app notifications
+      const notifs = recipients
+        .filter((r) => r.user_id)
+        .map((r) => ({
+          user_id: r.user_id,
+          type: "announcement",
+          title: subject,
+          body: broadcastMessage.trim(),
+          data: { conference_id: broadcastConf.id },
+        }))
+      if (notifs.length) await supabase.from("notifications").insert(notifs)
+
+      // Emails (best-effort)
+      if (broadcastEmail) {
+        const html = buildAnnouncementEmail({
+          conferenceName: confName,
+          subject,
+          message: broadcastMessage.trim(),
+          ctaLabel: t("email_view_conference"),
+          ctaUrl: `${window.location.origin}/conferences/${broadcastConf.id}`,
+          footerNote: t("email_footer_tagline"),
+        })
+        await Promise.all(
+          recipients
+            .filter((r) => r.email)
+            .map((r) =>
+              fetch("/api/send-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ to: r.email, subject: `${subject} — ${confName}`, html }),
+              }).catch(() => {}),
+            ),
+        )
+      }
+
+      alert(t("broadcast_sent"))
+      setBroadcastConf(null)
+      setBroadcastSubject("")
+      setBroadcastMessage("")
+    } catch (error) {
+      console.error("[v0] Error sending broadcast:", error)
+      alert("Error: " + (error as Error).message)
+    } finally {
+      setSendingBroadcast(false)
+    }
+  }
+
+  function exportApplicationsExcel(conf: ConferenceWithApplications) {
+    if (conf.applications.length === 0) {
+      alert(t("export_no_data"))
+      return
+    }
+    const committeeName = (id: string | null) => conf.committees.find((c) => c.id === id)?.name || ""
+    const esc = (v: unknown) =>
+      String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+    const headers = [
+      "№",
+      t("full_name"),
+      t("email"),
+      t("phone"),
+      t("assigned_country"),
+      t("assigned_committee"),
+      t("status"),
+    ]
+    const bodyRows = conf.applications
+      .map((app, i) => {
+        const cells = [
+          String(i + 1),
+          app.full_name,
+          app.email,
+          app.phone,
+          app.assigned_country || "",
+          committeeName(app.assigned_committee_id),
+          t(app.status as never) || app.status,
+        ]
+        return `<tr>${cells
+          .map(
+            (c, ci) =>
+              `<td style="border:1px solid #cbd5e1;padding:6px 10px;font-size:13px;${
+                ci === 0 ? "text-align:center;color:#64748b;" : ""
+              }mso-number-format:'\\@';">${esc(c)}</td>`,
+          )
+          .join("")}</tr>`
+      })
+      .join("")
+    const headRow = `<tr>${headers
+      .map(
+        (h) =>
+          `<th style="background:#2563eb;color:#ffffff;border:1px solid #1e40af;padding:8px 10px;font-size:13px;font-weight:700;text-align:left;">${esc(
+            h,
+          )}</th>`,
+      )
+      .join("")}</tr>`
+    const title = getConferenceName(conf)
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${esc(
+      title,
+    ).slice(0, 28)}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+<body>
+<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;">
+<caption style="text-align:left;font-size:16px;font-weight:700;padding:8px 0;">${esc(title)}</caption>
+<thead>${headRow}</thead>
+<tbody>${bodyRows}</tbody>
+</table>
+</body></html>`
+    const blob = new Blob(["﻿" + html], { type: "application/vnd.ms-excel;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    const safeName = title.replace(/[^a-zA-Z0-9а-яА-Я_-]+/g, "_")
+    link.download = `${safeName || "participants"}.xls`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
 
   async function loadEligibleUsers() {
     const { data } = await supabase
@@ -371,21 +530,36 @@ export default function InboxPage() {
           data: { conference_id: conf.id, status },
         })
 
-        // Email (silently skipped if email isn't configured yet)
+        // Email (silently skipped if email isn't configured yet) — branded template
         if (app.email) {
+          const committeeName =
+            status === "approved"
+              ? conf.committees?.find((c) => c.id === app.assigned_committee_id)?.name || null
+              : null
+          const html = buildStatusEmail({
+            delegateName: app.full_name,
+            conferenceName: confName,
+            status: status as "approved" | "rejected",
+            heading: title,
+            message: emailBody,
+            committee: committeeName,
+            country: status === "approved" ? app.assigned_country : null,
+            committeeLabel: t("email_committee_label"),
+            countryLabel: t("email_country_label"),
+            footerNote: t("email_footer_tagline"),
+            ctaLabel: status === "approved" ? t("email_view_conference") : undefined,
+            ctaUrl:
+              status === "approved"
+                ? `${window.location.origin}/conferences/${conf.id}`
+                : undefined,
+          })
           fetch("/api/send-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               to: app.email,
               subject: `${title} — ${confName}`,
-              html: `<div style="font-family:Arial,sans-serif;font-size:15px;color:#111">
-                <p>${app.full_name || ""},</p>
-                <p>${emailBody}</p>
-                <p style="color:#2563eb;font-weight:bold">${confName}</p>
-                <hr style="border:none;border-top:1px solid #eee"/>
-                <p style="color:#888;font-size:13px">MUN Kazakhstan</p>
-              </div>`,
+              html,
             }),
           }).catch(() => {})
         }
@@ -439,7 +613,11 @@ export default function InboxPage() {
     }
   }
 
-  async function updatePaymentStatus(receiptId: string, status: "confirmed" | "rejected") {
+  async function updatePaymentStatus(
+    receipt: PaymentReceipt,
+    conf: ConferenceWithApplications,
+    status: "confirmed" | "rejected",
+  ) {
     try {
       const { error } = await supabase
         .from("payment_receipts")
@@ -448,9 +626,48 @@ export default function InboxPage() {
           confirmed_by: userId,
           confirmed_at: new Date().toISOString(),
         })
-        .eq("id", receiptId)
+        .eq("id", receipt.id)
 
       if (error) throw error
+
+      // Notify the delegate (in-app + best-effort email)
+      if (receipt.user_id) {
+        const confName = getConferenceName(conf)
+        const title =
+          status === "confirmed" ? t("notif_payment_confirmed_title") : t("notif_payment_rejected_title")
+        const emailBody =
+          status === "confirmed" ? t("email_payment_confirmed_body") : t("email_payment_rejected_body")
+
+        await supabase.from("notifications").insert({
+          user_id: receipt.user_id,
+          type: "payment_status",
+          title,
+          body: confName,
+          data: { conference_id: conf.id, status },
+        })
+
+        // Recipient email comes from their application to this conference
+        const email = conf.applications.find((a) => a.user_id === receipt.user_id)?.email
+        if (email) {
+          const html = buildStatusEmail({
+            delegateName: receipt.full_name,
+            conferenceName: confName,
+            status: status === "confirmed" ? "approved" : "rejected",
+            heading: title,
+            message: emailBody,
+            footerNote: t("email_footer_tagline"),
+            ctaLabel: status === "confirmed" ? t("email_view_conference") : undefined,
+            ctaUrl:
+              status === "confirmed" ? `${window.location.origin}/conferences/${conf.id}` : undefined,
+          })
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: email, subject: `${title} — ${confName}`, html }),
+          }).catch(() => {})
+        }
+      }
+
       alert(status === "confirmed" ? t("payment_confirmed_toast") : t("payment_rejected_toast"))
       await loadApplications()
     } catch (error) {
@@ -727,10 +944,30 @@ export default function InboxPage() {
                           </CardDescription>
                         </div>
                         {conf.applications.length > 0 && (
-                          <Button size="sm" variant="outline" onClick={() => exportApplicationsCsv(conf)}>
-                            <Download className="w-4 h-4 mr-2" />
-                            {t("export_csv")}
-                          </Button>
+                          <div className="flex gap-2 flex-wrap">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setBroadcastConf(conf)
+                                setBroadcastSubject("")
+                                setBroadcastMessage("")
+                                setBroadcastAudience("approved")
+                                setBroadcastEmail(true)
+                              }}
+                            >
+                              <Megaphone className="w-4 h-4 mr-2" />
+                              {t("broadcast")}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => exportApplicationsExcel(conf)}>
+                              <FileSpreadsheet className="w-4 h-4 mr-2" />
+                              {t("export_excel")}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => exportApplicationsCsv(conf)}>
+                              <Download className="w-4 h-4 mr-2" />
+                              {t("export_csv")}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </CardHeader>
@@ -837,7 +1074,7 @@ export default function InboxPage() {
                                     </Badge>
                                     <Button
                                       size="sm"
-                                      onClick={() => updatePaymentStatus(receipt.id, "confirmed")}
+                                      onClick={() => updatePaymentStatus(receipt, conf, "confirmed")}
                                       className="bg-green-600 hover:bg-green-700 h-8"
                                     >
                                       <CheckCircle className="h-3.5 w-3.5 mr-1" />
@@ -846,7 +1083,7 @@ export default function InboxPage() {
                                     <Button
                                       size="sm"
                                       variant="destructive"
-                                      onClick={() => updatePaymentStatus(receipt.id, "rejected")}
+                                      onClick={() => updatePaymentStatus(receipt, conf, "rejected")}
                                       className="h-8"
                                     >
                                       <XCircle className="h-3.5 w-3.5 mr-1" />
@@ -996,6 +1233,86 @@ export default function InboxPage() {
           )}
         </div>
       </main>
+
+      {/* Broadcast dialog */}
+      <Dialog open={!!broadcastConf} onOpenChange={(open) => !open && setBroadcastConf(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-primary" />
+              {t("broadcast_title")}
+            </DialogTitle>
+            <DialogDescription>
+              {broadcastConf ? getConferenceName(broadcastConf) : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label>{t("broadcast_audience")}</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={broadcastAudience === "approved" ? "default" : "outline"}
+                  onClick={() => setBroadcastAudience("approved")}
+                >
+                  {t("broadcast_approved_only")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={broadcastAudience === "all" ? "default" : "outline"}
+                  onClick={() => setBroadcastAudience("all")}
+                >
+                  {t("broadcast_all_applicants")}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>{t("broadcast_subject")}</Label>
+              <Input
+                value={broadcastSubject}
+                onChange={(e) => setBroadcastSubject(e.target.value)}
+                placeholder={t("broadcast_subject_placeholder")}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>{t("broadcast_message")}</Label>
+              <Textarea
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                placeholder={t("broadcast_message_placeholder")}
+                rows={5}
+              />
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={broadcastEmail}
+                onCheckedChange={(v) => setBroadcastEmail(Boolean(v))}
+              />
+              <span className="text-sm">{t("broadcast_also_email")}</span>
+            </label>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBroadcastConf(null)}>
+              {t("cancel")}
+            </Button>
+            <Button
+              onClick={sendBroadcast}
+              disabled={sendingBroadcast}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Megaphone className="w-4 h-4 mr-2" />
+              {sendingBroadcast ? t("broadcast_sending") : t("broadcast_send")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

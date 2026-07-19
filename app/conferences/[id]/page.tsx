@@ -14,6 +14,7 @@ import { ConferenceDocuments } from "@/components/conference-documents"
 import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 import { ConferenceGallery } from "@/components/conference-gallery"
 import { ConferenceCertificate } from "@/components/conference-certificate"
+import { ConferenceSchedule } from "@/components/conference-schedule"
 
 interface Conference {
   id: string
@@ -316,6 +317,9 @@ export default function ConferenceDetailPage() {
                 </div>
                 <ConferenceDocuments conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
               </div>
+
+              {/* Schedule / agenda */}
+              <ConferenceSchedule conferenceId={conference.id} isOrganizer={isOrganizer} />
 
               {/* Photo gallery */}
               <ConferenceGallery conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
