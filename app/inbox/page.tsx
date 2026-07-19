@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Inbox, Calendar, Mail, Phone, FileText, CheckCircle, XCircle, Users, Shuffle, Home, UserCheck, CreditCard, ExternalLink, Clock, Download, Award } from "lucide-react"
 import Link from "next/link"
 import { AWARD_TYPES, awardLabelKey, type AwardType } from "@/lib/awards"
+import { buildStatusEmail } from "@/lib/email-templates"
 
 interface DelegateApplication {
   id: string
@@ -371,21 +372,36 @@ export default function InboxPage() {
           data: { conference_id: conf.id, status },
         })
 
-        // Email (silently skipped if email isn't configured yet)
+        // Email (silently skipped if email isn't configured yet) — branded template
         if (app.email) {
+          const committeeName =
+            status === "approved"
+              ? conf.committees?.find((c) => c.id === app.assigned_committee_id)?.name || null
+              : null
+          const html = buildStatusEmail({
+            delegateName: app.full_name,
+            conferenceName: confName,
+            status: status as "approved" | "rejected",
+            heading: title,
+            message: emailBody,
+            committee: committeeName,
+            country: status === "approved" ? app.assigned_country : null,
+            committeeLabel: t("email_committee_label"),
+            countryLabel: t("email_country_label"),
+            footerNote: t("email_footer_tagline"),
+            ctaLabel: status === "approved" ? t("email_view_conference") : undefined,
+            ctaUrl:
+              status === "approved"
+                ? `${window.location.origin}/conferences/${conf.id}`
+                : undefined,
+          })
           fetch("/api/send-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               to: app.email,
               subject: `${title} — ${confName}`,
-              html: `<div style="font-family:Arial,sans-serif;font-size:15px;color:#111">
-                <p>${app.full_name || ""},</p>
-                <p>${emailBody}</p>
-                <p style="color:#2563eb;font-weight:bold">${confName}</p>
-                <hr style="border:none;border-top:1px solid #eee"/>
-                <p style="color:#888;font-size:13px">MUN Kazakhstan</p>
-              </div>`,
+              html,
             }),
           }).catch(() => {})
         }

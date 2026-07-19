@@ -454,6 +454,10 @@ export const translations = {
     notif_award_title: "Вы получили награду! 🏅",
     email_approved_body: "Ваша заявка на конференцию одобрена. Поздравляем! Подробности — на странице конференции.",
     email_rejected_body: "К сожалению, ваша заявка на конференцию отклонена. Не расстраивайтесь — впереди новые конференции!",
+    email_committee_label: "Комитет",
+    email_country_label: "Страна",
+    email_view_conference: "Открыть конференцию",
+    email_footer_tagline: "Model United Nations Kazakhstan",
 
     // Notifications
     notifications: "Уведомления",
@@ -914,6 +918,10 @@ export const translations = {
     notif_award_title: "Сіз марапат алдыңыз! 🏅",
     email_approved_body: "Конференцияға өтініміңіз мақұлданды. Құттықтаймыз! Толығырақ — конференция бетінде.",
     email_rejected_body: "Өкінішке орай, конференцияға өтініміңіз қабылданбады. Алда жаңа конференциялар бар!",
+    email_committee_label: "Комитет",
+    email_country_label: "Ел",
+    email_view_conference: "Конференцияны ашу",
+    email_footer_tagline: "Model United Nations Kazakhstan",
 
     // Notifications
     notifications: "Хабарландырулар",
@@ -1373,6 +1381,10 @@ export const translations = {
     notif_award_title: "You received an award! 🏅",
     email_approved_body: "Your conference application has been approved. Congratulations! See the conference page for details.",
     email_rejected_body: "Unfortunately, your conference application was not accepted this time. Don't worry — more conferences are coming!",
+    email_committee_label: "Committee",
+    email_country_label: "Country",
+    email_view_conference: "Open conference",
+    email_footer_tagline: "Model United Nations Kazakhstan",
 
     // Notifications
     notifications: "Notifications",
