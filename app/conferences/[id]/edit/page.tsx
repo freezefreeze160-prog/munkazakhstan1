@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { REGIONS } from "@/lib/roles"
 import { ArrowLeft, Plus } from "lucide-react"
 
@@ -45,6 +46,8 @@ export default function EditConferencePage() {
     payment_instructions: "",
     poster_url: "",
     languages: [] as string[],
+    registration_open: true,
+    registration_deadline: "",
   })
 
   useEffect(() => {
@@ -107,6 +110,10 @@ export default function EditConferencePage() {
         payment_instructions: conf.payment_instructions || "",
         poster_url: conf.poster_url || "",
         languages: conf.languages || [],
+        registration_open: conf.registration_open !== false,
+        registration_deadline: conf.registration_deadline
+          ? String(conf.registration_deadline).slice(0, 10)
+          : "",
       })
     } catch (err) {
       console.error("Error loading conference for edit:", err)
@@ -168,6 +175,8 @@ export default function EditConferencePage() {
           payment_instructions: form.payment_instructions || null,
           poster_url: form.poster_url || null,
           languages: form.languages,
+          registration_open: form.registration_open,
+          registration_deadline: form.registration_deadline || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", params.id)
@@ -411,6 +420,29 @@ export default function EditConferencePage() {
                     onChange={(e) => setForm({ ...form, conditions: e.target.value })}
                     rows={4}
                   />
+                </div>
+
+                {/* Registration control */}
+                <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-semibold">{t("registration_open_label")}</Label>
+                      <p className="text-xs text-muted-foreground mt-1">{t("registration_open_hint")}</p>
+                    </div>
+                    <Switch
+                      checked={form.registration_open}
+                      onCheckedChange={(v) => setForm({ ...form, registration_open: v })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-sm">{t("registration_deadline")}</Label>
+                    <Input
+                      type="date"
+                      value={form.registration_deadline}
+                      onChange={(e) => setForm({ ...form, registration_deadline: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">{t("registration_deadline_hint")}</p>
+                  </div>
                 </div>
 
                 <div className="flex gap-4">

@@ -509,6 +509,10 @@ export const translations = {
     register_pick_desc: "Выберите конференцию, чтобы перейти к форме заявки.",
     login_required_to_apply: "Войдите в аккаунт, чтобы подать заявку.",
     continue_to_form: "Перейти к заявке",
+    registration_deadline: "Дедлайн регистрации",
+    registration_open_label: "Регистрация открыта",
+    registration_open_hint: "Выключите, чтобы закрыть приём заявок на конференцию.",
+    registration_deadline_hint: "После этой даты заявки приниматься не будут (необязательно).",
 
     // Notifications
     notifications: "Уведомления",
@@ -1024,6 +1028,10 @@ export const translations = {
     register_pick_desc: "Өтінім формасына өту үшін конференцияны таңдаңыз.",
     login_required_to_apply: "Өтінім беру үшін аккаунтқа кіріңіз.",
     continue_to_form: "Өтінімге өту",
+    registration_deadline: "Тіркеу мерзімі",
+    registration_open_label: "Тіркеу ашық",
+    registration_open_hint: "Конференцияға өтінім қабылдауды жабу үшін өшіріңіз.",
+    registration_deadline_hint: "Осы күннен кейін өтінімдер қабылданбайды (міндетті емес).",
 
     // Notifications
     notifications: "Хабарландырулар",
@@ -1538,6 +1546,10 @@ export const translations = {
     register_pick_desc: "Choose a conference to continue to the application form.",
     login_required_to_apply: "Log in to submit an application.",
     continue_to_form: "Continue to form",
+    registration_deadline: "Registration deadline",
+    registration_open_label: "Registration open",
+    registration_open_hint: "Turn off to stop accepting applications for this conference.",
+    registration_deadline_hint: "After this date applications will no longer be accepted (optional).",
 
     // Notifications
     notifications: "Notifications",
