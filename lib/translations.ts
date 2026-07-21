@@ -500,6 +500,15 @@ export const translations = {
     broadcast_sent: "Рассылка отправлена ✅",
     broadcast_message_required: "Введите текст сообщения",
     broadcast_no_recipients: "Нет получателей для выбранной аудитории",
+    position_paper: "Позиционный лист",
+    optional: "необязательно",
+    school_placeholder: "Введите название вашей школы",
+    attach_position_paper: "Прикрепить файл",
+    attach_receipt: "Прикрепить чек об оплате",
+    receipt_note: "Оплатите взнос по реквизитам выше и прикрепите чек. Организатор подтвердит оплату.",
+    register_pick_desc: "Выберите конференцию, чтобы перейти к форме заявки.",
+    login_required_to_apply: "Войдите в аккаунт, чтобы подать заявку.",
+    continue_to_form: "Перейти к заявке",
 
     // Notifications
     notifications: "Уведомления",
@@ -1006,6 +1015,15 @@ export const translations = {
     broadcast_sent: "Тарату жіберілді ✅",
     broadcast_message_required: "Хабарлама мәтінін енгізіңіз",
     broadcast_no_recipients: "Таңдалған аудитория үшін алушылар жоқ",
+    position_paper: "Позициялық құжат",
+    optional: "міндетті емес",
+    school_placeholder: "Мектебіңіздің атауын енгізіңіз",
+    attach_position_paper: "Файл тіркеу",
+    attach_receipt: "Төлем түбіртегін тіркеу",
+    receipt_note: "Жоғарыдағы деректемелер бойынша жарнаны төлеп, түбіртекті тіркеңіз. Ұйымдастырушы төлемді растайды.",
+    register_pick_desc: "Өтінім формасына өту үшін конференцияны таңдаңыз.",
+    login_required_to_apply: "Өтінім беру үшін аккаунтқа кіріңіз.",
+    continue_to_form: "Өтінімге өту",
 
     // Notifications
     notifications: "Хабарландырулар",
@@ -1511,6 +1529,15 @@ export const translations = {
     broadcast_sent: "Broadcast sent ✅",
     broadcast_message_required: "Enter a message",
     broadcast_no_recipients: "No recipients for the selected audience",
+    position_paper: "Position paper",
+    optional: "optional",
+    school_placeholder: "Enter your school name",
+    attach_position_paper: "Attach file",
+    attach_receipt: "Attach payment receipt",
+    receipt_note: "Pay the fee using the details above and attach the receipt. The organizer will confirm your payment.",
+    register_pick_desc: "Choose a conference to continue to the application form.",
+    login_required_to_apply: "Log in to submit an application.",
+    continue_to_form: "Continue to form",
 
     // Notifications
     notifications: "Notifications",
