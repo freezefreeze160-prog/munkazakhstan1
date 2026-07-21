@@ -15,13 +15,19 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Upload, FileText, CheckCircle2, CreditCard } from "lucide-react"
 
 interface Conference {
   id: string
   name_ru: string
   name_kk: string
   name_en: string
+  registration_fee_amount: number | null
+  registration_fee_currency: string | null
+  payment_bank: string | null
+  payment_card_number: string | null
+  payment_card_holder: string | null
+  payment_instructions: string | null
 }
 
 interface Committee {
@@ -44,14 +50,19 @@ export default function ApplyToConferencePage() {
     full_name: "",
     email: "",
     phone: "",
+    school: "",
+    grade: "",
     motivation: "",
     primary_choice: "",
     secondary_choice: "",
     third_choice: "",
   })
+  const [positionPaper, setPositionPaper] = useState<File | null>(null)
+  const [receipt, setReceipt] = useState<File | null>(null)
 
   useEffect(() => {
     loadConferenceAndUser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   async function loadConferenceAndUser() {
@@ -65,10 +76,11 @@ export default function ApplyToConferencePage() {
         return
       }
 
-      // Load conference
       const { data: confData, error: confError } = await supabase
         .from("user_conferences")
-        .select("id, name_ru, name_kk, name_en")
+        .select(
+          "id, name_ru, name_kk, name_en, registration_fee_amount, registration_fee_currency, payment_bank, payment_card_number, payment_card_holder, payment_instructions",
+        )
         .eq("id", params.id)
         .single()
 
@@ -79,19 +91,17 @@ export default function ApplyToConferencePage() {
         .from("conference_committees")
         .select("*")
         .eq("conference_id", params.id)
-        .order("created_at", { ascending: true })
+        .order("priority", { ascending: true })
 
       if (committeesError) throw committeesError
       setCommittees(committeesData || [])
 
-      // Load user profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("full_name, phone")
         .eq("user_id", user.id)
         .single()
 
-      // Check if already applied
       const { data: existingApp } = await supabase
         .from("delegate_applications")
         .select("id")
@@ -103,18 +113,28 @@ export default function ApplyToConferencePage() {
         setError(t("already_applied"))
       }
 
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         full_name: profileData?.full_name || "",
         email: user.email || "",
         phone: profileData?.phone || "",
-      })
+      }))
     } catch (error) {
       console.error("[v0] Error loading:", error)
       setError(t("load_error_conference"))
     } finally {
       setLoading(false)
     }
+  }
+
+  async function uploadFile(file: File, folder: string): Promise<string> {
+    const fd = new FormData()
+    fd.append("file", file)
+    fd.append("folder", folder)
+    const res = await fetch("/api/upload-blob", { method: "POST", body: fd })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || "Upload failed")
+    return data.url as string
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -124,21 +144,9 @@ export default function ApplyToConferencePage() {
 
     try {
       if (committees.length > 0) {
-        if (!formData.primary_choice) {
-          setError(t("select_committee") + " (" + t("primary_choice") + ")")
-          setSubmitting(false)
-          return
-        }
-        if (!formData.secondary_choice) {
-          setError(t("select_committee") + " (" + t("secondary_choice") + ")")
-          setSubmitting(false)
-          return
-        }
-        if (!formData.third_choice) {
-          setError(t("select_committee") + " (" + t("third_choice") + ")")
-          setSubmitting(false)
-          return
-        }
+        if (!formData.primary_choice) throw new Error(t("select_committee") + " (" + t("primary_choice") + ")")
+        if (!formData.secondary_choice) throw new Error(t("select_committee") + " (" + t("secondary_choice") + ")")
+        if (!formData.third_choice) throw new Error(t("select_committee") + " (" + t("third_choice") + ")")
       }
 
       const {
@@ -146,20 +154,48 @@ export default function ApplyToConferencePage() {
       } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
-      const { error: insertError } = await supabase.from("delegate_applications").insert({
-        conference_id: params.id as string,
-        user_id: user.id,
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone || "",
-        motivation: formData.motivation,
-        primary_committee_id: formData.primary_choice || null,
-        secondary_committee_id: formData.secondary_choice || null,
-        third_committee_id: formData.third_choice || null,
-        status: "pending",
-      })
+      // Optional position paper upload
+      let positionPaperUrl: string | null = null
+      if (positionPaper) {
+        positionPaperUrl = await uploadFile(positionPaper, "position-papers")
+      }
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("delegate_applications")
+        .insert({
+          conference_id: params.id as string,
+          user_id: user.id,
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone || "",
+          motivation: formData.motivation,
+          grade: formData.grade ? Number.parseInt(formData.grade, 10) : null,
+          school_type: formData.school ? "custom" : null,
+          custom_school_name: formData.school || null,
+          position_paper_url: positionPaperUrl,
+          primary_committee_id: formData.primary_choice || null,
+          secondary_committee_id: formData.secondary_choice || null,
+          third_committee_id: formData.third_choice || null,
+          status: "pending",
+        })
+        .select("id")
+        .single()
 
       if (insertError) throw insertError
+
+      // Optional payment receipt
+      if (receipt) {
+        const receiptUrl = await uploadFile(receipt, "receipts")
+        await supabase.from("payment_receipts").insert({
+          conference_id: params.id as string,
+          application_id: inserted?.id || null,
+          user_id: user.id,
+          receipt_url: receiptUrl,
+          full_name: formData.full_name,
+          amount: conference?.registration_fee_amount ?? null,
+          status: "submitted",
+        })
+      }
 
       alert(t("application_submitted"))
       router.push("/dashboard")
@@ -198,6 +234,13 @@ export default function ApplyToConferencePage() {
   const conferenceName =
     language === "ru" ? conference.name_ru : language === "kk" ? conference.name_kk : conference.name_en
 
+  const hasPaymentInfo =
+    !!conference.registration_fee_amount ||
+    !!conference.payment_bank ||
+    !!conference.payment_card_number
+
+  const alreadyApplied = error === t("already_applied")
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -230,6 +273,7 @@ export default function ApplyToConferencePage() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Personal info */}
                 <div className="grid gap-2">
                   <Label htmlFor="full_name">
                     {t("full_name")} <span className="text-red-500">*</span>
@@ -249,20 +293,48 @@ export default function ApplyToConferencePage() {
                   <Input id="email" type="email" required value={formData.email} readOnly className="bg-muted" />
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">
+                      {t("phone")} <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+7XXXXXXXXXX"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="grade">{t("grade")}</Label>
+                    <Input
+                      id="grade"
+                      type="number"
+                      min={7}
+                      max={12}
+                      value={formData.grade}
+                      onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                      placeholder="7-12"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid gap-2">
-                  <Label htmlFor="phone">
-                    {t("phone")} <span className="text-red-500">*</span>
+                  <Label htmlFor="school">
+                    {t("school")} <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="phone"
-                    type="tel"
+                    id="school"
                     required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+7XXXXXXXXXX"
+                    value={formData.school}
+                    onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                    placeholder={t("school_placeholder")}
                   />
                 </div>
 
+                {/* Committee choices */}
                 {committees.length > 0 && (
                   <>
                     <div className="grid gap-2">
@@ -337,6 +409,7 @@ export default function ApplyToConferencePage() {
                   </>
                 )}
 
+                {/* Motivation */}
                 <div className="grid gap-2">
                   <Label htmlFor="motivation">{t("motivation")}</Label>
                   <Textarea
@@ -344,15 +417,116 @@ export default function ApplyToConferencePage() {
                     value={formData.motivation}
                     onChange={(e) => setFormData({ ...formData, motivation: e.target.value })}
                     placeholder={t("why_you")}
-                    rows={6}
+                    rows={5}
                   />
                 </div>
+
+                {/* Position paper */}
+                <div className="grid gap-2">
+                  <Label>
+                    {t("position_paper")}{" "}
+                    <span className="text-xs text-muted-foreground font-normal">({t("optional")})</span>
+                  </Label>
+                  <input
+                    id="pp-file"
+                    type="file"
+                    accept=".pdf,.doc,.docx,image/*"
+                    className="hidden"
+                    onChange={(e) => setPositionPaper(e.target.files?.[0] || null)}
+                  />
+                  <Button asChild type="button" variant="outline" className="justify-start">
+                    <label htmlFor="pp-file" className="cursor-pointer">
+                      {positionPaper ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                          <span className="truncate">{positionPaper.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 mr-2" />
+                          {t("attach_position_paper")}
+                        </>
+                      )}
+                    </label>
+                  </Button>
+                </div>
+
+                {/* Payment requisites + receipt */}
+                {hasPaymentInfo && (
+                  <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-primary" />
+                      <Label className="text-base font-semibold">{t("payment_details")}</Label>
+                    </div>
+                    {conference.registration_fee_amount ? (
+                      <p className="text-sm">
+                        {t("registration_fee")}:{" "}
+                        <span className="font-bold">
+                          {conference.registration_fee_amount.toLocaleString()}{" "}
+                          {conference.registration_fee_currency || "KZT"}
+                        </span>
+                      </p>
+                    ) : null}
+                    {conference.payment_bank && (
+                      <p className="text-sm text-muted-foreground">
+                        {t("payment_bank")}: <span className="text-foreground">{conference.payment_bank}</span>
+                      </p>
+                    )}
+                    {conference.payment_card_number && (
+                      <p className="text-sm text-muted-foreground">
+                        {t("payment_card_number")}:{" "}
+                        <span className="text-foreground font-mono">{conference.payment_card_number}</span>
+                      </p>
+                    )}
+                    {conference.payment_card_holder && (
+                      <p className="text-sm text-muted-foreground">
+                        {t("payment_card_holder")}:{" "}
+                        <span className="text-foreground">{conference.payment_card_holder}</span>
+                      </p>
+                    )}
+                    {conference.payment_instructions && (
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {conference.payment_instructions}
+                      </p>
+                    )}
+
+                    <div className="grid gap-2 pt-1">
+                      <Label>
+                        {t("attach_receipt")}{" "}
+                        <span className="text-xs text-muted-foreground font-normal">({t("optional")})</span>
+                      </Label>
+                      <input
+                        id="receipt-file"
+                        type="file"
+                        accept="image/*,.pdf"
+                        className="hidden"
+                        onChange={(e) => setReceipt(e.target.files?.[0] || null)}
+                      />
+                      <Button asChild type="button" variant="outline" className="justify-start">
+                        <label htmlFor="receipt-file" className="cursor-pointer">
+                          {receipt ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                              <span className="truncate">{receipt.name}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              {t("attach_receipt")}
+                            </>
+                          )}
+                        </label>
+                      </Button>
+                      <p className="text-xs text-muted-foreground">{t("receipt_note")}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex gap-4">
                   <Button
                     type="submit"
                     className="flex-1 bg-primary hover:bg-primary/90"
-                    disabled={submitting || committees.length === 0}
+                    disabled={submitting || committees.length === 0 || alreadyApplied}
                   >
                     {submitting ? t("submitting") : t("submit")}
                   </Button>
