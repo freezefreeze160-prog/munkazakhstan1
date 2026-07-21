@@ -423,10 +423,7 @@ export default function ApplyToConferencePage() {
 
                 {/* Position paper */}
                 <div className="grid gap-2">
-                  <Label>
-                    {t("position_paper")}{" "}
-                    <span className="text-xs text-muted-foreground font-normal">({t("optional")})</span>
-                  </Label>
+                  <Label>{t("position_paper")}</Label>
                   <input
                     id="pp-file"
                     type="file"
