@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
 import { useTheme } from "@/contexts/theme-context"
 import { Button } from "@/components/ui/button"
-import { User, Search, Shield, Moon, Sun, Inbox, Trophy, ChevronDown, Users, Newspaper, Info, MapPin, GraduationCap } from "lucide-react"
+import { User, Search, Shield, Moon, Sun, Inbox, Trophy, ChevronDown, Users, Newspaper, Info, MapPin, GraduationCap, Menu, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -58,6 +58,7 @@ export function Header() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [isFounder, setIsFounder] = useState(false)
   const [canManageConferences, setCanManageConferences] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -187,6 +188,19 @@ export function Header() {
 
             {user && <NotificationBell />}
 
+            {/* Mobile hamburger */}
+            <Button
+              onClick={() => setMobileOpen((v) => !v)}
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              aria-label="Menu"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+
+            <div className="hidden md:flex items-center gap-2">
+
             {user ? (
               <>
                 {isFounder && (
@@ -238,11 +252,13 @@ export function Header() {
             >
               EN
             </Button>
+            </div>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        <nav className="md:hidden flex flex-wrap gap-3 mt-4 pt-4 border-t border-border">
+        {/* Mobile Navigation (toggled by hamburger) */}
+        {mobileOpen && (
+        <nav className="md:hidden flex flex-col gap-1 mt-4 pt-4 border-t border-border" onClick={() => setMobileOpen(false)}>
           <Link href="/" className="text-sm text-foreground hover:text-primary font-medium transition-colors">
             {t("home")}
           </Link>
@@ -311,7 +327,21 @@ export function Header() {
               {t("inbox")}
             </Link>
           )}
+
+          {/* Language switcher inside the mobile menu */}
+          <div className="flex items-center gap-2 pt-3 mt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
+            <Button size="sm" variant={language === "ru" ? "default" : "outline"} onClick={() => setLanguage("ru")}>
+              RU
+            </Button>
+            <Button size="sm" variant={language === "kk" ? "default" : "outline"} onClick={() => setLanguage("kk")}>
+              ҚАЗ
+            </Button>
+            <Button size="sm" variant={language === "en" ? "default" : "outline"} onClick={() => setLanguage("en")}>
+              EN
+            </Button>
+          </div>
         </nav>
+        )}
       </div>
     </header>
   )
