@@ -23,6 +23,7 @@ interface Conference {
   date_en: string
   location: string
   created_at: string
+  registration_deadline: string | null
 }
 
 // Single entry point for delegate registration: pick a conference, then
@@ -45,11 +46,17 @@ export default function RegisterPage() {
       try {
         const { data } = await supabase
           .from("user_conferences")
-          .select("id, name_ru, name_kk, name_en, date_ru, date_kk, date_en, location, created_at")
+          .select(
+            "id, name_ru, name_kk, name_en, date_ru, date_kk, date_en, location, created_at, registration_deadline",
+          )
           .eq("status", "published")
           .eq("registration_open", true)
           .order("created_at", { ascending: false })
-        setConferences(data || [])
+        // Drop conferences whose registration deadline has already passed
+        const open = (data || []).filter(
+          (c) => !c.registration_deadline || new Date(c.registration_deadline) >= new Date(),
+        )
+        setConferences(open)
       } catch (e) {
         console.error("[v0] Error loading conferences:", e)
       } finally {

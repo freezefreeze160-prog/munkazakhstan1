@@ -28,6 +28,8 @@ interface Conference {
   payment_card_number: string | null
   payment_card_holder: string | null
   payment_instructions: string | null
+  registration_open: boolean | null
+  registration_deadline: string | null
 }
 
 interface Committee {
@@ -79,7 +81,7 @@ export default function ApplyToConferencePage() {
       const { data: confData, error: confError } = await supabase
         .from("user_conferences")
         .select(
-          "id, name_ru, name_kk, name_en, registration_fee_amount, registration_fee_currency, payment_bank, payment_card_number, payment_card_holder, payment_instructions",
+          "id, name_ru, name_kk, name_en, registration_fee_amount, registration_fee_currency, payment_bank, payment_card_number, payment_card_holder, payment_instructions, registration_open, registration_deadline",
         )
         .eq("id", params.id)
         .single()
@@ -143,6 +145,12 @@ export default function ApplyToConferencePage() {
     setError("")
 
     try {
+      if (
+        conference?.registration_open === false ||
+        (conference?.registration_deadline && new Date(conference.registration_deadline) < new Date())
+      ) {
+        throw new Error(t("registration_closed"))
+      }
       if (committees.length > 0) {
         if (!formData.primary_choice) throw new Error(t("select_committee") + " (" + t("primary_choice") + ")")
         if (!formData.secondary_choice) throw new Error(t("select_committee") + " (" + t("secondary_choice") + ")")
@@ -239,6 +247,10 @@ export default function ApplyToConferencePage() {
     !!conference.payment_bank ||
     !!conference.payment_card_number
 
+  const deadlinePassed =
+    !!conference.registration_deadline && new Date(conference.registration_deadline) < new Date()
+  const registrationClosed = conference.registration_open === false || deadlinePassed
+
   const alreadyApplied = error === t("already_applied")
 
   return (
@@ -263,6 +275,18 @@ export default function ApplyToConferencePage() {
               {error && (
                 <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-400 rounded-lg">
                   {error}
+                </div>
+              )}
+
+              {registrationClosed && (
+                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-400 rounded-lg">
+                  <p className="font-medium">{t("registration_closed")}</p>
+                  {deadlinePassed && conference.registration_deadline && (
+                    <p className="text-sm mt-1">
+                      {t("registration_deadline")}:{" "}
+                      {new Date(conference.registration_deadline).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -523,7 +547,7 @@ export default function ApplyToConferencePage() {
                   <Button
                     type="submit"
                     className="flex-1 bg-primary hover:bg-primary/90"
-                    disabled={submitting || committees.length === 0 || alreadyApplied}
+                    disabled={submitting || committees.length === 0 || alreadyApplied || registrationClosed}
                   >
                     {submitting ? t("submitting") : t("submit")}
                   </Button>

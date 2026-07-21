@@ -42,6 +42,8 @@ interface Conference {
   payment_card_number: string | null
   payment_card_holder: string | null
   payment_instructions: string | null
+  registration_open: boolean | null
+  registration_deadline: string | null
 }
 
 export default function ConferenceDetailPage() {
@@ -178,6 +180,11 @@ export default function ConferenceDetailPage() {
         ? conference.conditions_kk
         : conference.conditions_en
 
+  const deadlinePassed =
+    !!conference.registration_deadline && new Date(conference.registration_deadline) < new Date()
+  // Treat null registration_open as open (legacy conferences without the flag)
+  const registrationClosed = conference.registration_open === false || deadlinePassed
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -244,7 +251,11 @@ export default function ConferenceDetailPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3 mt-6">
-                  {userId ? (
+                  {registrationClosed ? (
+                    <Button size="lg" variant="outline" disabled>
+                      {t("registration_closed")}
+                    </Button>
+                  ) : userId ? (
                     <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
                       <Link href={`/conferences/${conference.id}/apply`}>{t("apply_to_conference")}</Link>
                     </Button>
@@ -380,7 +391,19 @@ export default function ConferenceDetailPage() {
               )}
 
               <div className="pt-4 border-t">
-                {userId ? (
+                {registrationClosed ? (
+                  <div className="text-center">
+                    <Button className="w-full" size="lg" variant="outline" disabled>
+                      {t("registration_closed")}
+                    </Button>
+                    {deadlinePassed && conference.registration_deadline && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {t("registration_deadline")}:{" "}
+                        {new Date(conference.registration_deadline).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                ) : userId ? (
                   <Button asChild className="w-full bg-primary hover:bg-primary/90" size="lg">
                     <Link href={`/conferences/${conference.id}/apply`}>{t("apply_to_conference")}</Link>
                   </Button>
