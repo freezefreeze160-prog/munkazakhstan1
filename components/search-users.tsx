@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Search, Phone } from "lucide-react"
+import { Search } from "lucide-react"
 import Link from "next/link"
 import { getRoleBadgeColor, getRoleLabel, regions } from "@/lib/roles"
 import type { UserProfile } from "@/lib/roles"
@@ -121,14 +121,6 @@ export function SearchUsers() {
                         )}
                       </div>
                       {user.bio && <p className="text-muted-foreground mb-3 line-clamp-2">{user.bio}</p>}
-                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                        {user.phone && (
-                          <div className="flex items-center gap-1">
-                            <Phone className="w-4 h-4" />
-                            <span>{user.phone}</span>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </CardContent>
