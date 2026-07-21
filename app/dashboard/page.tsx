@@ -16,6 +16,7 @@ import type { User } from "@supabase/supabase-js"
 import { Calendar, Home, UserCircle, Upload, Plus, FileText, Inbox } from "lucide-react"
 import type { UserProfile } from "@/lib/roles"
 import { resizeImage } from "@/lib/image-utils"
+import { MyApplications } from "@/components/my-applications"
 import { getRoleBadgeColor, getRoleLabel } from "@/lib/roles"
 import { Input } from "@/components/ui/input"
 
@@ -718,48 +719,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("my_registrations")}</CardTitle>
-            <CardDescription>
-              {registrations.length > 0
-                ? `${registrations.length} ${registrations.length === 1 ? "регистрация" : "регистраций"}`
-                : t("no_registrations")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {registrations.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">{t("no_registrations")}</p>
-                <Button asChild className="bg-primary hover:bg-primary/90">
-                  <Link href="/register">{t("register_for_conference")}</Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {registrations.map((reg) => (
-                  <div key={reg.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-lg">{reg.conference}</p>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {t("registered_on")} {new Date(reg.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="pt-2 border-t">
-                      <p className="font-medium">{reg.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {t(`city_${reg.school}`)} • {t("grade")} {reg.grade}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {user && <MyApplications userId={user.id} />}
       </div>
     </div>
   )
