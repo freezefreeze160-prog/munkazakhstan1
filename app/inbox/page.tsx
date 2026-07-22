@@ -149,7 +149,10 @@ export default function InboxPage() {
         }))
       if (notifs.length) await supabase.from("notifications").insert(notifs)
 
-      // Emails (best-effort)
+      // Emails — track the real outcome so we can report it back
+      let sent = 0
+      let skipped = 0
+      let failed = 0
       if (broadcastEmail) {
         const html = buildAnnouncementEmail({
           conferenceName: confName,
@@ -162,17 +165,34 @@ export default function InboxPage() {
         await Promise.all(
           recipients
             .filter((r) => r.email)
-            .map((r) =>
-              fetch("/api/send-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ to: r.email, subject: `${subject} — ${confName}`, html }),
-              }).catch(() => {}),
-            ),
+            .map(async (r) => {
+              try {
+                const res = await fetch("/api/send-email", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ to: r.email, subject: `${subject} — ${confName}`, html }),
+                })
+                const data = await res.json().catch(() => ({}))
+                if (res.ok && data.sent) sent++
+                else if (data.skipped) skipped++
+                else failed++
+              } catch {
+                failed++
+              }
+            }),
         )
       }
 
-      alert(t("broadcast_sent"))
+      // Report what actually happened
+      let msg = `${t("broadcast_sent")}\n${t("notifications")}: ${notifs.length}`
+      if (broadcastEmail) {
+        if (skipped > 0 && sent === 0) msg += `\n⚠️ ${t("broadcast_email_not_configured")}`
+        else {
+          msg += `\n${t("broadcast_emails_sent")}: ${sent}`
+          if (failed > 0) msg += `\n⚠️ ${t("broadcast_emails_failed")}: ${failed}`
+        }
+      }
+      alert(msg)
       setBroadcastConf(null)
       setBroadcastSubject("")
       setBroadcastMessage("")
