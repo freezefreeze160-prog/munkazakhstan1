@@ -14,10 +14,10 @@ export default function AboutPage() {
       <Header />
 
       <main className="flex-1">
-        {/* Video-background hero */}
-        <section className="relative overflow-hidden min-h-[78vh] flex items-end">
+        {/* Video hero — whole video visible, text over the darker bottom */}
+        <section className="relative overflow-hidden bg-black min-h-[70vh] flex items-center justify-center">
           <video
-            className="absolute inset-0 w-full h-full object-cover object-top"
+            className="w-full h-auto max-h-[72vh] object-contain block"
             src="/landing.mp4"
             autoPlay
             muted
@@ -25,9 +25,10 @@ export default function AboutPage() {
             playsInline
             preload="auto"
           />
-          {/* Gradient: video stays visible up top, text sits over the darker bottom */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/85" />
-          <div className="relative z-10 container mx-auto px-4 max-w-4xl pt-40 pb-14 md:pb-20 text-center">
+          {/* Gradient only at the bottom so the text stays readable over the video */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent z-[1] h-2/3 pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-10 md:pb-14">
+            <div className="mx-auto max-w-4xl text-center">
             <div className="inline-block p-3 bg-white/10 backdrop-blur-sm rounded-full mb-6 border border-white/20">
               <Globe className="h-12 w-12 text-white" />
             </div>
@@ -38,6 +39,7 @@ export default function AboutPage() {
             <p className="text-base md:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
               {t("about_desc")}
             </p>
+            </div>
           </div>
         </section>
 
