@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/supabase/client"
+import { formatConfDate } from "@/lib/format-date"
 import { Calendar, MapPin, ArrowRight, Info } from "lucide-react"
 
 interface Conference {
@@ -71,7 +72,7 @@ export default function RegisterPage() {
     return language === "ru" ? c.name_ru : language === "kk" ? c.name_kk : c.name_en
   }
   function getDate(c: Conference) {
-    return language === "ru" ? c.date_ru : language === "kk" ? c.date_kk : c.date_en
+    return formatConfDate(language === "ru" ? c.date_ru : language === "kk" ? c.date_kk : c.date_en)
   }
 
   function handleContinue() {

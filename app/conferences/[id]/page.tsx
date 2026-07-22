@@ -15,6 +15,7 @@ import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 import { ConferenceGallery } from "@/components/conference-gallery"
 import { ConferenceCertificate } from "@/components/conference-certificate"
 import { ConferenceSchedule } from "@/components/conference-schedule"
+import { formatConfDate } from "@/lib/format-date"
 
 interface Conference {
   id: string
@@ -166,7 +167,9 @@ export default function ConferenceDetailPage() {
   }
 
   const name = language === "ru" ? conference.name_ru : language === "kk" ? conference.name_kk : conference.name_en
-  const date = language === "ru" ? conference.date_ru : language === "kk" ? conference.date_kk : conference.date_en
+  const date = formatConfDate(
+    language === "ru" ? conference.date_ru : language === "kk" ? conference.date_kk : conference.date_en,
+  )
   const description =
     language === "ru"
       ? conference.description_ru
