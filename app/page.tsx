@@ -137,25 +137,6 @@ export default function HomePage() {
       <Header />
 
       <main className="flex-1">
-        {/* Video landing (muted, autoplay, looped) */}
-        <section className="relative w-full h-[calc(100dvh-72px)] min-h-[380px] overflow-hidden bg-black">
-          <video
-            className="absolute inset-0 w-full h-full object-cover"
-            src="/landing.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-          />
-          {/* subtle scroll hint */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 animate-bounce text-white/80">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </div>
-        </section>
-
         {/* Hero with shader background */}
         <section className="relative overflow-hidden min-h-[88vh] flex items-center">
           <ShaderBackground />
