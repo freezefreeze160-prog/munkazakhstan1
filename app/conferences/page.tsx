@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, MapPin, Info, Search, DollarSign, ArrowDownUp } from "lucide-react"
 import { REGIONS } from "@/lib/roles"
 import { formatConfDate } from "@/lib/format-date"
+import { withTimeout } from "@/lib/async"
 
 interface Conference {
   id: string
@@ -58,26 +59,40 @@ export default function ConferencesPage() {
   }, [])
 
   async function loadConferences() {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUserId(user?.id || null)
-
-      const { data, error } = await supabase
+    // Published conferences are public — load them without waiting on auth so a
+    // stale session can never block the page.
+    const query = () =>
+      supabase
         .from("user_conferences")
         .select("*")
         .eq("status", "published")
         .order("created_at", { ascending: false })
 
+    try {
+      const { data, error } = await withTimeout(query())
       if (error) throw error
-
       setConferences(data || [])
     } catch (error) {
       console.error("[v0] Error loading conferences:", error)
+      // The session may be expired and blocking the request — drop it and
+      // retry anonymously so the public list still loads.
+      try {
+        await withTimeout(supabase.auth.signOut({ scope: "local" }), 3000).catch(() => {})
+        const { data } = await withTimeout(query())
+        setConferences(data || [])
+        setUserId(null)
+      } catch (retryError) {
+        console.error("[v0] Retry failed:", retryError)
+      }
     } finally {
       setLoading(false)
     }
+
+    // Resolve the signed-in user separately (from local storage, non-blocking).
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setUserId(data.session?.user?.id ?? null))
+      .catch(() => {})
   }
 
   function getConferenceName(conf: Conference) {
