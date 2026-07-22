@@ -205,29 +205,21 @@ export default function ConferenceDetailPage() {
           {/* Backdrop: poster fills the right, fades into darkness on the left */}
           <div className="absolute inset-0">
             {conference.poster_url ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={conference.poster_url}
-                  alt=""
-                  aria-hidden
-                  className="absolute right-0 top-0 h-full w-full md:w-[64%] object-cover object-center"
-                />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={conference.poster_url}
-                  alt=""
-                  aria-hidden
-                  className="absolute inset-0 h-full w-full object-cover blur-2xl scale-125 opacity-30 md:hidden"
-                />
-              </>
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={conference.poster_url}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-black" />
             )}
-            {/* Dark cinematic fade: solid left → transparent over the image */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 md:via-black/60 to-black/10" />
+            {/* Dark cinematic fade: solid black on the left, smoothly revealing
+                the image toward the right (stronger in the middle). */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black from-5% via-black/85 via-45% to-black/30 to-95%" />
             {/* Blend the bottom into the page background */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/15 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
             {/* Extra darkening on mobile for readability */}
             <div className="absolute inset-0 bg-black/45 md:bg-transparent" />
           </div>
