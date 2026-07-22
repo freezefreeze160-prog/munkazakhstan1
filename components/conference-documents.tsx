@@ -231,7 +231,9 @@ export function ConferenceDocuments({
         {isOrganizer && <p className="text-xs text-muted-foreground mt-2">{t("file_pdf_doc_only")}</p>}
       </div>
 
-      {/* Position Papers */}
+      {/* Position Papers — private submissions, visible only to organizers.
+          Delegates upload their own from the dashboard ("My applications"). */}
+      {isOrganizer && (
       <div className="pt-6 border-t">
         <div className="flex items-center gap-2 mb-1">
           <FileText className="w-5 h-5 text-primary" />
@@ -293,6 +295,7 @@ export function ConferenceDocuments({
         )}
         {userId && <p className="text-xs text-muted-foreground mt-2">{t("file_pdf_doc_only")}</p>}
       </div>
+      )}
     </div>
   )
 }
