@@ -16,6 +16,7 @@ import { ConferenceGallery } from "@/components/conference-gallery"
 import { ConferenceCertificate } from "@/components/conference-certificate"
 import { ConferenceSchedule } from "@/components/conference-schedule"
 import { formatConfDate } from "@/lib/format-date"
+import { REGIONS } from "@/lib/roles"
 
 interface Conference {
   id: string
@@ -45,6 +46,7 @@ interface Conference {
   payment_instructions: string | null
   registration_open: boolean | null
   registration_deadline: string | null
+  languages: string[] | null
 }
 
 export default function ConferenceDetailPage() {
@@ -188,12 +190,17 @@ export default function ConferenceDetailPage() {
   // Treat null registration_open as open (legacy conferences without the flag)
   const registrationClosed = conference.registration_open === false || deadlinePassed
 
+  const cityName =
+    conference.city && REGIONS[Number(conference.city) as keyof typeof REGIONS]
+      ? REGIONS[Number(conference.city) as keyof typeof REGIONS][language]
+      : ""
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1">
-        {/* Cinematic hero */}
+        {/* Cinematic hero — Kinopoisk-style */}
         <section className="relative">
           <div className="absolute inset-0 overflow-hidden">
             {conference.poster_url ? (
@@ -202,26 +209,28 @@ export default function ConferenceDetailPage() {
                 src={conference.poster_url}
                 alt=""
                 aria-hidden
-                className="w-full h-full object-cover scale-110 blur-2xl opacity-40"
+                className="w-full h-full object-cover scale-125 blur-3xl opacity-50"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/5" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/75 to-background" />
+            {/* Layered gradients for cinematic depth */}
+            <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/40" />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
           </div>
 
-          <div className="relative container mx-auto px-4 max-w-4xl pt-6 pb-8">
-            <Button asChild variant="ghost" className="mb-6 -ml-2">
+          <div className="relative container mx-auto px-4 max-w-5xl pt-6 pb-10 md:pb-14">
+            <Button asChild variant="ghost" className="mb-6 -ml-2 text-muted-foreground">
               <Link href="/conferences">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {t("view_conferences")}
               </Link>
             </Button>
 
-            <div className="flex flex-col sm:flex-row gap-6">
+            <div className="flex flex-col sm:flex-row gap-6 md:gap-10">
               {/* Poster */}
-              <div className="w-40 sm:w-52 flex-shrink-0 mx-auto sm:mx-0">
-                <div className="aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border border-border/40 bg-muted">
+              <div className="w-44 sm:w-60 flex-shrink-0 mx-auto sm:mx-0">
+                <div className="aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 bg-muted">
                   {conference.poster_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={conference.poster_url} alt={name} className="w-full h-full object-cover" />
@@ -234,9 +243,52 @@ export default function ConferenceDetailPage() {
               </div>
 
               {/* Info */}
-              <div className="flex-1 flex flex-col justify-end">
-                <h1 className="text-3xl md:text-5xl font-bold text-foreground text-balance">{name}</h1>
-                <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4 text-muted-foreground">
+              <div className="flex-1 flex flex-col justify-end min-w-0">
+                <h1 className="text-4xl md:text-6xl font-extrabold text-foreground text-balance tracking-tight">
+                  {name}
+                </h1>
+
+                {/* Meta line: year · Model UN · city */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-4 text-sm md:text-base text-muted-foreground">
+                  {conference.date_ru?.slice(0, 4) && <span>{conference.date_ru.slice(0, 4)}</span>}
+                  <span className="text-muted-foreground/40">•</span>
+                  <span>Model UN</span>
+                  {cityName && (
+                    <>
+                      <span className="text-muted-foreground/40">•</span>
+                      <span>{cityName}</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Badge row: languages, fee, status */}
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {(conference.languages || []).map((lang) => (
+                    <span
+                      key={lang}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-md bg-white/10 text-foreground border border-white/10"
+                    >
+                      {lang}
+                    </span>
+                  ))}
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-white/10 text-foreground border border-white/10">
+                    {conference.registration_fee_amount
+                      ? `${conference.registration_fee_amount.toLocaleString()} ${conference.registration_fee_currency || "KZT"}`
+                      : language === "ru"
+                        ? "Бесплатно"
+                        : language === "kk"
+                          ? "Тегін"
+                          : "Free"}
+                  </span>
+                  {registrationClosed && (
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-red-500/15 text-red-400 border border-red-500/20">
+                      {t("registration_closed")}
+                    </span>
+                  )}
+                </div>
+
+                {/* Meta details */}
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4 text-muted-foreground text-sm">
                   <span className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     {date}
@@ -253,17 +305,27 @@ export default function ConferenceDetailPage() {
                   </span>
                 </div>
 
-                <div className="flex flex-wrap gap-3 mt-6">
+                {/* Short description */}
+                {description && (
+                  <p className="mt-4 text-muted-foreground max-w-2xl line-clamp-3 leading-relaxed">{description}</p>
+                )}
+
+                {/* Actions */}
+                <div className="flex flex-wrap items-center gap-3 mt-6">
                   {registrationClosed ? (
-                    <Button size="lg" variant="outline" disabled>
+                    <Button size="lg" variant="outline" disabled className="rounded-full">
                       {t("registration_closed")}
                     </Button>
                   ) : userId ? (
-                    <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="rounded-full px-8 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-white shadow-lg shadow-primary/25"
+                    >
                       <Link href={`/conferences/${conference.id}/apply`}>{t("apply_to_conference")}</Link>
                     </Button>
                   ) : (
-                    <Button asChild size="lg" variant="outline">
+                    <Button asChild size="lg" className="rounded-full px-8 bg-gradient-to-r from-primary to-indigo-600 text-white">
                       <Link href="/auth/login">{t("login_to_apply")}</Link>
                     </Button>
                   )}
@@ -272,6 +334,7 @@ export default function ConferenceDetailPage() {
                     disabled={favLoading}
                     size="lg"
                     variant={isFavorite ? "default" : "outline"}
+                    className="rounded-full"
                   >
                     {isFavorite ? (
                       <>
@@ -286,7 +349,7 @@ export default function ConferenceDetailPage() {
                     )}
                   </Button>
                   {isOrganizer && (
-                    <Button asChild size="lg" variant="outline">
+                    <Button asChild size="lg" variant="outline" className="rounded-full">
                       <Link href={`/conferences/${conference.id}/edit`}>
                         <Pencil className="w-4 h-4 mr-2" />
                         {t("edit_conference")}
