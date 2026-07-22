@@ -17,7 +17,7 @@ export default function AboutPage() {
         {/* Video-background hero */}
         <section className="relative overflow-hidden">
           <video
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-top"
             src="/landing.mp4"
             autoPlay
             muted
