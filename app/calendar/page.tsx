@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, MapPin, ChevronLeft, ChevronRight, Clock } from "lucide-react"
 import Link from "next/link"
+import { formatConfDate } from "@/lib/format-date"
 
 interface Conference {
   id: string
@@ -63,8 +64,26 @@ export default function CalendarPage() {
 
   function parseConferenceDate(conf: Conference): ParsedConference {
     const dateStr = conf.date_en || conf.date_ru || conf.date_kk
-    console.log("[v0] Parsing conference date:", conf.name_en, dateStr)
-    
+
+    // Format 0: ISO "YYYY-MM-DD" — how the date input actually stores dates.
+    const isoMatch = dateStr?.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch
+      const y = Number.parseInt(year)
+      const monthNum = Number.parseInt(month) - 1
+      const d = Number.parseInt(day)
+      const date = new Date(y, monthNum, d)
+      return {
+        ...conf,
+        startDate: date,
+        endDate: date,
+        startDay: d,
+        endDay: d,
+        month: monthNum,
+        year: y,
+      }
+    }
+
     // Try multiple formats
     // Format 1: "19-20 апреля 2026" (Russian range)
     const rangeMatch = dateStr?.match(/(\d+)[-–](\d+)\s+(\w+)\s+(\d{4})/)
@@ -147,7 +166,7 @@ export default function CalendarPage() {
   }
 
   function getConferenceDate(conf: Conference) {
-    return language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en
+    return formatConfDate(language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en)
   }
 
   function getDaysInMonth(month: number, year: number) {
