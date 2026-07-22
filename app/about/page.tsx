@@ -13,14 +13,43 @@ export default function AboutPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-1 py-12">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="text-center mb-12">
-            <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
-              <Globe className="h-12 w-12 text-primary" />
+      <main className="flex-1">
+        {/* Video-background hero */}
+        <section className="relative overflow-hidden">
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src="/landing.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+          />
+          {/* Dark overlay so the text stays readable */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
+          <div className="relative z-10 container mx-auto px-4 max-w-4xl py-24 md:py-32 text-center">
+            <div className="inline-block p-3 bg-white/10 backdrop-blur-sm rounded-full mb-6 border border-white/20">
+              <Globe className="h-12 w-12 text-white" />
             </div>
-            <h1 className="text-5xl font-bold mb-4 text-foreground">{t("about_title")}</h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{t("about_desc")}</p>
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-lg">{t("about_title")}</h1>
+            <p className="text-lg md:text-2xl text-white/90 font-medium mb-4 drop-shadow">
+              {t("about_hero_tagline")}
+            </p>
+            <p className="text-base md:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
+              {t("about_desc")}
+            </p>
+          </div>
+        </section>
+
+        <div className="container mx-auto px-4 max-w-6xl py-12">
+          {/* Our story */}
+          <div className="max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl font-bold mb-6 text-foreground text-center">{t("about_story_title")}</h2>
+            <div className="space-y-4 text-muted-foreground text-lg leading-relaxed">
+              <p>{t("about_story_p1")}</p>
+              <p>{t("about_story_p2")}</p>
+              <p>{t("about_story_p3")}</p>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -84,6 +113,27 @@ export default function AboutPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Our team */}
+          <Card className="border-2 mb-12">
+            <CardContent className="p-8 md:p-12">
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Users className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold mb-4 text-foreground">{t("about_team_title")}</h2>
+                  <p className="text-muted-foreground text-lg leading-relaxed">{t("about_team_desc")}</p>
+                  <a
+                    href="/secretariat"
+                    className="inline-block mt-6 text-primary font-semibold hover:underline"
+                  >
+                    {t("secretariat")} →
+                  </a>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="bg-gradient-to-br from-primary to-primary/80 text-white">
             <CardContent className="p-12 text-center">
