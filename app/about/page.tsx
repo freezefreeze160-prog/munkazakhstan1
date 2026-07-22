@@ -15,7 +15,7 @@ export default function AboutPage() {
 
       <main className="flex-1">
         {/* Video-background hero */}
-        <section className="relative overflow-hidden">
+        <section className="relative overflow-hidden min-h-[78vh] flex items-end">
           <video
             className="absolute inset-0 w-full h-full object-cover object-top"
             src="/landing.mp4"
@@ -25,9 +25,9 @@ export default function AboutPage() {
             playsInline
             preload="auto"
           />
-          {/* Dark overlay so the text stays readable */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
-          <div className="relative z-10 container mx-auto px-4 max-w-4xl py-24 md:py-32 text-center">
+          {/* Gradient: video stays visible up top, text sits over the darker bottom */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/85" />
+          <div className="relative z-10 container mx-auto px-4 max-w-4xl pt-40 pb-14 md:pb-20 text-center">
             <div className="inline-block p-3 bg-white/10 backdrop-blur-sm rounded-full mb-6 border border-white/20">
               <Globe className="h-12 w-12 text-white" />
             </div>
