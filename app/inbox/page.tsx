@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { formatConfDate } from "@/lib/format-date"
 import { useLanguage } from "@/contexts/language-context"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -775,7 +776,7 @@ export default function InboxPage() {
   }
 
   function getConferenceDate(conf: ConferenceWithApplications) {
-    return language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en
+    return formatConfDate(language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en)
   }
 
   const totalApplications = conferences.reduce((sum, conf) => sum + conf.applications.length, 0)

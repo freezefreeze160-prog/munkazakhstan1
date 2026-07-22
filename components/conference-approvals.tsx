@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Check, X, Calendar, MapPin, DollarSign, Globe } from "lucide-react"
+import { formatConfDate } from "@/lib/format-date"
 
 interface PendingConference {
   id: string
@@ -16,8 +17,9 @@ interface PendingConference {
   city: string
   location: string
   time: string
-  date_start: string
-  date_end: string
+  date_ru: string
+  date_kk: string
+  date_en: string
   description_ru: string
   description_kk: string
   description_en: string
@@ -185,7 +187,7 @@ export default function ConferenceApprovals() {
                   <div className="flex flex-wrap gap-2 mb-3">
                     <Badge variant="outline">
                       <Calendar className="h-3 w-3 mr-1" />
-                      {conf.date_start} - {conf.date_end}
+                      {formatConfDate(language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en)}
                     </Badge>
                     <Badge variant="outline">
                       <MapPin className="h-3 w-3 mr-1" />

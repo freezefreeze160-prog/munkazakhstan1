@@ -17,6 +17,7 @@ import { Calendar, Home, UserCircle, Upload, Plus, FileText, Inbox } from "lucid
 import type { UserProfile } from "@/lib/roles"
 import { resizeImage } from "@/lib/image-utils"
 import { MyApplications } from "@/components/my-applications"
+import { formatConfDate } from "@/lib/format-date"
 import { getRoleBadgeColor, getRoleLabel } from "@/lib/roles"
 import { Input } from "@/components/ui/input"
 
@@ -569,7 +570,7 @@ export default function DashboardPage() {
                         </p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en}
+                          {formatConfDate(language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en)}
                         </p>
                         <p className="text-sm text-muted-foreground">{conf.location}</p>
                       </div>
@@ -689,7 +690,7 @@ export default function DashboardPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 {favorites.map((conf) => {
                   const cname = language === "ru" ? conf.name_ru : language === "kk" ? conf.name_kk : conf.name_en
-                  const cdate = language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en
+                  const cdate = formatConfDate(language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en)
                   return (
                     <Link
                       key={conf.id}

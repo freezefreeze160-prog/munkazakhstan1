@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, MapPin, Info, Search, DollarSign, ArrowDownUp } from "lucide-react"
 import { REGIONS } from "@/lib/roles"
+import { formatConfDate } from "@/lib/format-date"
 
 interface Conference {
   id: string
@@ -38,7 +39,6 @@ interface Conference {
   poster_url: string | null
   registration_fee_amount: number | null
   registration_fee_currency: string | null
-  date_start: string | null
 }
 
 export default function ConferencesPage() {
@@ -85,7 +85,7 @@ export default function ConferencesPage() {
   }
 
   function getConferenceDate(conf: Conference) {
-    return language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en
+    return formatConfDate(language === "ru" ? conf.date_ru : language === "kk" ? conf.date_kk : conf.date_en)
   }
 
   function getConferenceDescription(conf: Conference) {
@@ -107,10 +107,13 @@ export default function ConferencesPage() {
     })
     .sort((a, b) => {
       if (sortBy === "date") {
-        // Upcoming first; conferences without a start date go last
-        if (!a.date_start) return 1
-        if (!b.date_start) return -1
-        return a.date_start.localeCompare(b.date_start)
+        // date_ru holds an ISO date (YYYY-MM-DD), which sorts chronologically.
+        // Upcoming first; conferences without a date go last.
+        const da = a.date_ru || ""
+        const db = b.date_ru || ""
+        if (!da) return 1
+        if (!db) return -1
+        return da.localeCompare(db)
       }
       if (sortBy === "fee_asc") {
         return (Number(a.registration_fee_amount) || 0) - (Number(b.registration_fee_amount) || 0)
