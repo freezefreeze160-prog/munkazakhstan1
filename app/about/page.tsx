@@ -14,10 +14,10 @@ export default function AboutPage() {
       <Header />
 
       <main className="flex-1">
-        {/* Video hero — full width, aspect ratio preserved, never cropped */}
-        <section className="relative overflow-hidden bg-black">
+        {/* Video hero — whole video visible, text over the darker bottom */}
+        <section className="relative overflow-hidden bg-black min-h-[70vh] flex items-center justify-center">
           <video
-            className="w-full h-auto block"
+            className="w-full h-auto max-h-[72vh] object-contain block"
             src="/landing.mp4"
             autoPlay
             muted
