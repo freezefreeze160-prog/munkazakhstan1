@@ -278,10 +278,10 @@ export default function InboxPage() {
   }
 
   async function loadEligibleUsers() {
+    // Load ALL users so any participant can be made responsible for a conference.
     const { data } = await supabase
       .from("profiles")
       .select("user_id, full_name, role")
-      .in("role", ["founder", "admin", "general_secretary", "deputy"])
       .order("full_name", { ascending: true })
     if (data) setEligibleUsers(data)
   }
@@ -336,13 +336,7 @@ export default function InboxPage() {
         return
       }
 
-      if (!profile || !["general_secretary", "founder", "admin", "deputy"].includes(profile.role)) {
-        setError("access_denied")
-        setLoading(false)
-        return
-      }
-
-      const effectiveRole = profile.role
+      const effectiveRole = profile?.role ?? "participant"
       setUserRole(effectiveRole)
 
       let conferencesData: any[] = []
@@ -352,20 +346,13 @@ export default function InboxPage() {
         const { data, error: confError } = await supabase.from("user_conferences").select("*").order("created_at", { ascending: false })
         if (confError) console.log("[v0] Conferences load error:", confError)
         conferencesData = data || []
-      } else if (effectiveRole === "deputy") {
-        // Deputy sees only conferences they are assigned to
-        const { data } = await supabase
-          .from("user_conferences")
-          .select("*")
-          .eq("assigned_deputy_id", user.id)
-          .order("created_at", { ascending: false })
-        conferencesData = data || []
       } else {
-        // General secretary and admin see only their own conferences
+        // Everyone else sees conferences they created OR are assigned to manage.
+        // This lets any user made "responsible" for a conference manage it.
         const { data } = await supabase
           .from("user_conferences")
           .select("*")
-          .eq("creator_id", user.id)
+          .or(`creator_id.eq.${user.id},assigned_deputy_id.eq.${user.id}`)
           .order("created_at", { ascending: false })
         conferencesData = data || []
       }
@@ -1018,8 +1005,9 @@ export default function InboxPage() {
                         </div>
                       )}
 
-                      {/* Deputy Assignment */}
-                      {eligibleUsers.length > 0 && (
+                      {/* Assign responsible person — owner / founder / admin only */}
+                      {(conf.creator_id === userId || userRole === "founder" || userRole === "admin") &&
+                        eligibleUsers.length > 0 && (
                         <div className="mb-6 p-4 border rounded-lg">
                           <h4 className="font-semibold flex items-center gap-2 mb-3">
                             <UserCheck className="w-4 h-4" />

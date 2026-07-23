@@ -81,8 +81,9 @@ export default function ConferenceDetailPage() {
 
       if (user) {
         const isCreator = data?.creator_id === user.id
+        const isAssigned = (data as { assigned_deputy_id?: string | null })?.assigned_deputy_id === user.id
         let hasElevatedRole = false
-        if (!isCreator) {
+        if (!isCreator && !isAssigned) {
           const { data: profileData } = await supabase
             .from("profiles")
             .select("role")
@@ -93,7 +94,7 @@ export default function ConferenceDetailPage() {
             profileData?.role === "general_secretary" ||
             profileData?.role === "admin"
         }
-        setIsOrganizer(isCreator || hasElevatedRole)
+        setIsOrganizer(isCreator || isAssigned || hasElevatedRole)
 
         const { data: fav } = await supabase
           .from("conference_favorites")
