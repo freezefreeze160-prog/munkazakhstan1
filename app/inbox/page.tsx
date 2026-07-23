@@ -112,6 +112,7 @@ export default function InboxPage() {
   const [broadcastEmail, setBroadcastEmail] = useState(true)
   const [broadcastAudience, setBroadcastAudience] = useState<"approved" | "all">("approved")
   const [sendingBroadcast, setSendingBroadcast] = useState(false)
+  const [deputySearch, setDeputySearch] = useState<Record<string, string>>({})
 
   useEffect(() => {
     loadApplications()
@@ -514,11 +515,12 @@ export default function InboxPage() {
     app: DelegateApplication,
     conf: ConferenceWithApplications,
     status: string,
+    reason?: string,
   ) {
     try {
       const { error } = await supabase
         .from("delegate_applications")
-        .update({ status })
+        .update({ status, rejection_reason: status === "rejected" ? reason || null : null })
         .eq("id", app.id)
 
       if (error) throw error
@@ -527,14 +529,17 @@ export default function InboxPage() {
       if ((status === "approved" || status === "rejected") && app.user_id) {
         const confName = getConferenceName(conf)
         const title = status === "approved" ? t("notif_approved_title") : t("notif_rejected_title")
-        const emailBody = status === "approved" ? t("email_approved_body") : t("email_rejected_body")
+        let emailBody = status === "approved" ? t("email_approved_body") : t("email_rejected_body")
+        if (status === "rejected" && reason?.trim()) {
+          emailBody += `\n\n${t("reject_reason_label")}: ${reason.trim()}`
+        }
 
         // In-app notification (works immediately, no external service)
         await supabase.from("notifications").insert({
           user_id: app.user_id,
           type: "application_status",
           title,
-          body: confName,
+          body: status === "rejected" && reason?.trim() ? `${confName} — ${reason.trim()}` : confName,
           data: { conference_id: conf.id, status },
         })
 
@@ -625,12 +630,14 @@ export default function InboxPage() {
     receipt: PaymentReceipt,
     conf: ConferenceWithApplications,
     status: "confirmed" | "rejected",
+    reason?: string,
   ) {
     try {
       const { error } = await supabase
         .from("payment_receipts")
         .update({
           status,
+          note: status === "rejected" ? reason || null : null,
           confirmed_by: userId,
           confirmed_at: new Date().toISOString(),
         })
@@ -643,14 +650,17 @@ export default function InboxPage() {
         const confName = getConferenceName(conf)
         const title =
           status === "confirmed" ? t("notif_payment_confirmed_title") : t("notif_payment_rejected_title")
-        const emailBody =
+        let emailBody =
           status === "confirmed" ? t("email_payment_confirmed_body") : t("email_payment_rejected_body")
+        if (status === "rejected" && reason?.trim()) {
+          emailBody += `\n\n${t("reject_reason_label")}: ${reason.trim()}`
+        }
 
         await supabase.from("notifications").insert({
           user_id: receipt.user_id,
           type: "payment_status",
           title,
-          body: confName,
+          body: status === "rejected" && reason?.trim() ? `${confName} — ${reason.trim()}` : confName,
           data: { conference_id: conf.id, status },
         })
 
@@ -1013,25 +1023,54 @@ export default function InboxPage() {
                             <UserCheck className="w-4 h-4" />
                             {t("assign_deputy")}
                           </h4>
-                          <div className="flex gap-2 items-center">
-                            <select
-                              className="flex-1 text-sm border rounded-md px-3 py-2 bg-background"
-                              defaultValue={conf.assigned_deputy_id || ""}
-                              onChange={(e) => assignDeputy(conf.id, e.target.value)}
-                            >
-                              <option value="">{t("no_deputy_assigned")}</option>
-                              {eligibleUsers.map((u) => (
-                                <option key={u.user_id} value={u.user_id}>
-                                  {u.full_name} ({t(u.role) || u.role})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+
                           {conf.assigned_deputy_id && (
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {t("current_deputy")}: {eligibleUsers.find((u) => u.user_id === conf.assigned_deputy_id)?.full_name || conf.assigned_deputy_id}
-                            </p>
+                            <div className="flex items-center justify-between gap-2 mb-3 p-2 rounded-md bg-primary/5 border border-primary/20">
+                              <span className="text-sm">
+                                {t("current_deputy")}:{" "}
+                                <span className="font-medium">
+                                  {eligibleUsers.find((u) => u.user_id === conf.assigned_deputy_id)?.full_name ||
+                                    conf.assigned_deputy_id}
+                                </span>
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-600 h-7"
+                                onClick={() => assignDeputy(conf.id, "")}
+                              >
+                                {t("remove")}
+                              </Button>
+                            </div>
                           )}
+
+                          <Input
+                            placeholder={t("search_user_placeholder")}
+                            value={deputySearch[conf.id] || ""}
+                            onChange={(e) => setDeputySearch((p) => ({ ...p, [conf.id]: e.target.value }))}
+                            className="mb-2"
+                          />
+                          <div className="max-h-52 overflow-y-auto rounded-md border divide-y">
+                            {eligibleUsers
+                              .filter((u) => {
+                                const q = (deputySearch[conf.id] || "").trim().toLowerCase()
+                                return !q || (u.full_name || "").toLowerCase().includes(q)
+                              })
+                              .slice(0, 30)
+                              .map((u) => (
+                                <button
+                                  key={u.user_id}
+                                  type="button"
+                                  onClick={() => assignDeputy(conf.id, u.user_id)}
+                                  className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center justify-between ${
+                                    conf.assigned_deputy_id === u.user_id ? "bg-primary/10" : ""
+                                  }`}
+                                >
+                                  <span>{u.full_name}</span>
+                                  <span className="text-xs text-muted-foreground">{t(u.role) || u.role}</span>
+                                </button>
+                              ))}
+                          </div>
                         </div>
                       )}
 
@@ -1092,7 +1131,11 @@ export default function InboxPage() {
                                     <Button
                                       size="sm"
                                       variant="destructive"
-                                      onClick={() => updatePaymentStatus(receipt, conf, "rejected")}
+                                      onClick={() => {
+                                        const reason = window.prompt(t("reject_reason_prompt"))
+                                        if (reason === null) return
+                                        updatePaymentStatus(receipt, conf, "rejected", reason)
+                                      }}
                                       className="h-8"
                                     >
                                       <XCircle className="h-3.5 w-3.5 mr-1" />
@@ -1200,7 +1243,11 @@ export default function InboxPage() {
                                         <Button
                                           size="sm"
                                           variant="destructive"
-                                          onClick={() => updateApplicationStatus(app, conf, "rejected")}
+                                          onClick={() => {
+                                            const reason = window.prompt(t("reject_reason_prompt"))
+                                            if (reason === null) return
+                                            updateApplicationStatus(app, conf, "rejected", reason)
+                                          }}
                                         >
                                           <XCircle className="h-4 w-4 mr-1" />
                                           {t("reject")}

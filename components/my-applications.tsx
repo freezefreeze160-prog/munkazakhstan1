@@ -22,6 +22,7 @@ interface Application {
   third_committee_id: string | null
   assigned_committee_id: string | null
   assigned_country: string | null
+  rejection_reason: string | null
 }
 
 interface Conf {
@@ -276,6 +277,12 @@ export function MyApplications({ userId }: { userId: string }) {
                     </div>
                     {statusBadge(app.status)}
                   </div>
+
+                  {app.status === "rejected" && app.rejection_reason && (
+                    <p className="text-sm text-red-500/90 bg-red-500/5 border border-red-500/20 rounded-md px-3 py-2">
+                      {t("reject_reason_label")}: {app.rejection_reason}
+                    </p>
+                  )}
 
                   {/* Assigned committee / awards */}
                   {app.assigned_committee_id && (
