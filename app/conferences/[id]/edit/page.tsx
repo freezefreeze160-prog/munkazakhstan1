@@ -77,8 +77,9 @@ export default function EditConferencePage() {
       }
 
       const isCreator = conf.creator_id === user.id
+      const isAssigned = conf.assigned_deputy_id === user.id
       let elevated = false
-      if (!isCreator) {
+      if (!isCreator && !isAssigned) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
@@ -86,7 +87,7 @@ export default function EditConferencePage() {
           .maybeSingle()
         elevated = profile?.role === "founder" || profile?.role === "admin"
       }
-      if (!isCreator && !elevated) {
+      if (!isCreator && !isAssigned && !elevated) {
         setAllowed(false)
         setLoading(false)
         return

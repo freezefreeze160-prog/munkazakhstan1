@@ -87,6 +87,14 @@ export function Header() {
             setCanManageConferences(true)
           } else if (profileData?.role === "general_secretary" || profileData?.role === "admin") {
             setCanManageConferences(true)
+          } else {
+            // Any user who created or was assigned to a conference can manage it
+            const { data: managed } = await supabase
+              .from("user_conferences")
+              .select("id")
+              .or(`creator_id.eq.${user.id},assigned_deputy_id.eq.${user.id}`)
+              .limit(1)
+            if (managed && managed.length > 0) setCanManageConferences(true)
           }
         }
       } catch {
@@ -117,6 +125,13 @@ export function Header() {
           setCanManageConferences(true)
         } else if (profileData?.role === "general_secretary" || profileData?.role === "admin") {
           setCanManageConferences(true)
+        } else {
+          const { data: managed } = await supabase
+            .from("user_conferences")
+            .select("id")
+            .or(`creator_id.eq.${session.user.id},assigned_deputy_id.eq.${session.user.id}`)
+            .limit(1)
+          if (managed && managed.length > 0) setCanManageConferences(true)
         }
       }
     })
