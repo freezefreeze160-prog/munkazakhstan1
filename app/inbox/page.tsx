@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { formatConfDate } from "@/lib/format-date"
+import { presidiumPositionKey } from "@/lib/presidium"
 import { useLanguage } from "@/contexts/language-context"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -51,6 +52,21 @@ interface EligibleUser {
   role: string
 }
 
+interface PresidiumApplication {
+  id: string
+  conference_id: string
+  user_id: string
+  full_name: string | null
+  email: string | null
+  phone: string | null
+  position: string
+  committee_id: string | null
+  motivation: string | null
+  experience: string | null
+  status: string
+  created_at: string
+}
+
 interface Committee {
   id: string
   name: string
@@ -85,6 +101,7 @@ interface ConferenceWithApplications {
   date_kk: string
   date_en: string
   applications: DelegateApplication[]
+  presidium: PresidiumApplication[]
   committees: Committee[]
   receipts: PaymentReceipt[]
   awards: ConferenceAward[]
@@ -386,9 +403,16 @@ export default function InboxPage() {
               .select("id, user_id, award_type")
               .eq("conference_id", conf.id)
 
+            const { data: presidium } = await supabase
+              .from("presidium_applications")
+              .select("*")
+              .eq("conference_id", conf.id)
+              .order("created_at", { ascending: false })
+
             return {
               ...conf,
               applications: apps || [],
+              presidium: presidium || [],
               committees: committeesData || [],
               receipts: receipts || [],
               awards: awards || [],
@@ -582,6 +606,64 @@ export default function InboxPage() {
       await loadApplications()
     } catch (error) {
       console.error("[v0] Error updating application status:", error)
+      alert("Error: " + (error as Error).message)
+    }
+  }
+
+  async function updatePresidiumStatus(
+    app: PresidiumApplication,
+    conf: ConferenceWithApplications,
+    status: "approved" | "rejected",
+    reason?: string,
+  ) {
+    try {
+      const { error } = await supabase
+        .from("presidium_applications")
+        .update({ status, rejection_reason: status === "rejected" ? reason || null : null })
+        .eq("id", app.id)
+      if (error) throw error
+
+      if (app.user_id) {
+        const confName = getConferenceName(conf)
+        const position = t(presidiumPositionKey(app.position) as never) || app.position
+        const title =
+          status === "approved" ? t("notif_presidium_approved") : t("notif_presidium_rejected")
+        let emailBody =
+          (status === "approved" ? t("email_presidium_approved_body") : t("email_presidium_rejected_body")) +
+          `\n\n${t("presidium_position")}: ${position}`
+        if (status === "rejected" && reason?.trim()) emailBody += `\n${t("reject_reason_label")}: ${reason.trim()}`
+
+        await supabase.from("notifications").insert({
+          user_id: app.user_id,
+          type: "presidium_status",
+          title,
+          body: `${confName} — ${position}`,
+          data: { conference_id: conf.id, status },
+        })
+
+        if (app.email) {
+          const html = buildStatusEmail({
+            delegateName: app.full_name,
+            conferenceName: confName,
+            status,
+            heading: title,
+            message: emailBody,
+            footerNote: t("email_footer_tagline"),
+            ctaLabel: status === "approved" ? t("email_view_conference") : undefined,
+            ctaUrl: status === "approved" ? `${window.location.origin}/conferences/${conf.id}` : undefined,
+          })
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: app.email, subject: `${title} — ${confName}`, html }),
+          }).catch(() => {})
+        }
+      }
+
+      alert(t("status_updated"))
+      await loadApplications()
+    } catch (error) {
+      console.error("[v0] Error updating presidium status:", error)
       alert("Error: " + (error as Error).message)
     }
   }
@@ -1070,6 +1152,86 @@ export default function InboxPage() {
                                   <span className="text-xs text-muted-foreground">{t(u.role) || u.role}</span>
                                 </button>
                               ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Presidium applications */}
+                      {conf.presidium && conf.presidium.length > 0 && (
+                        <div className="mb-6 p-4 border rounded-lg">
+                          <h4 className="font-semibold flex items-center gap-2 mb-3">
+                            <UserCheck className="w-4 h-4" />
+                            {t("presidium_applications")}
+                            <span className="text-sm font-normal text-muted-foreground">
+                              ({conf.presidium.length})
+                            </span>
+                          </h4>
+                          <div className="space-y-3">
+                            {conf.presidium.map((p) => (
+                              <div key={p.id} className="p-3 rounded-lg border bg-background">
+                                <div className="flex items-start justify-between gap-3 flex-wrap">
+                                  <div className="min-w-0">
+                                    <p className="font-medium">{p.full_name}</p>
+                                    <p className="text-sm text-primary font-medium">
+                                      {t(presidiumPositionKey(p.position) as never) || p.position}
+                                      {p.committee_id &&
+                                        ` · ${conf.committees.find((c) => c.id === p.committee_id)?.name || ""}`}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                      {p.email} · {p.phone}
+                                    </p>
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      p.status === "approved"
+                                        ? "default"
+                                        : p.status === "rejected"
+                                          ? "destructive"
+                                          : "secondary"
+                                    }
+                                  >
+                                    {t(p.status)}
+                                  </Badge>
+                                </div>
+                                {p.experience && (
+                                  <p className="text-sm text-muted-foreground mt-2">
+                                    <span className="font-medium text-foreground">{t("presidium_experience")}:</span>{" "}
+                                    {p.experience}
+                                  </p>
+                                )}
+                                {p.motivation && (
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    <span className="font-medium text-foreground">{t("motivation")}:</span>{" "}
+                                    {p.motivation}
+                                  </p>
+                                )}
+                                {p.status === "pending" && (
+                                  <div className="flex gap-2 mt-3">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updatePresidiumStatus(p, conf, "approved")}
+                                      className="bg-green-600 hover:bg-green-700 h-8"
+                                    >
+                                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t("approve")}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="h-8"
+                                      onClick={() => {
+                                        const reason = window.prompt(t("reject_reason_prompt"))
+                                        if (reason === null) return
+                                        updatePresidiumStatus(p, conf, "rejected", reason)
+                                      }}
+                                    >
+                                      <XCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t("reject")}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
