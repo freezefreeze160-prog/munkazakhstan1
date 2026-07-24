@@ -48,6 +48,7 @@ export default function EditConferencePage() {
     languages: [] as string[],
     registration_open: true,
     registration_deadline: "",
+    presidium_registration_open: false,
   })
 
   useEffect(() => {
@@ -115,6 +116,7 @@ export default function EditConferencePage() {
         registration_deadline: conf.registration_deadline
           ? String(conf.registration_deadline).slice(0, 10)
           : "",
+        presidium_registration_open: conf.presidium_registration_open === true,
       })
     } catch (err) {
       console.error("Error loading conference for edit:", err)
@@ -178,6 +180,7 @@ export default function EditConferencePage() {
           languages: form.languages,
           registration_open: form.registration_open,
           registration_deadline: form.registration_deadline || null,
+          presidium_registration_open: form.presidium_registration_open,
           updated_at: new Date().toISOString(),
         })
         .eq("id", params.id)
@@ -443,6 +446,17 @@ export default function EditConferencePage() {
                       onChange={(e) => setForm({ ...form, registration_deadline: e.target.value })}
                     />
                     <p className="text-xs text-muted-foreground">{t("registration_deadline_hint")}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div>
+                      <Label className="text-base font-semibold">{t("presidium_registration_label")}</Label>
+                      <p className="text-xs text-muted-foreground mt-1">{t("presidium_registration_hint")}</p>
+                    </div>
+                    <Switch
+                      checked={form.presidium_registration_open}
+                      onCheckedChange={(v) => setForm({ ...form, presidium_registration_open: v })}
+                    />
                   </div>
                 </div>
 

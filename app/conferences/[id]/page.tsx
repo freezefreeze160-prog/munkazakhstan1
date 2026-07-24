@@ -47,6 +47,7 @@ interface Conference {
   registration_open: boolean | null
   registration_deadline: string | null
   languages: string[] | null
+  presidium_registration_open: boolean | null
 }
 
 export default function ConferenceDetailPage() {
@@ -344,6 +345,16 @@ export default function ConferenceDetailPage() {
                     </>
                   )}
                 </Button>
+                {conference.presidium_registration_open && userId && (
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full border-white/30 text-white bg-white/5 hover:bg-white/15 hover:text-white"
+                  >
+                    <Link href={`/conferences/${conference.id}/presidium`}>{t("apply_to_presidium")}</Link>
+                  </Button>
+                )}
                 {isOrganizer && (
                   <Button asChild size="lg" variant="outline" className="rounded-full border-white/30 text-white bg-white/5 hover:bg-white/15 hover:text-white">
                     <Link href={`/conferences/${conference.id}/edit`}>
