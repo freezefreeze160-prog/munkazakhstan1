@@ -1,7 +1,7 @@
 "use client"
 
 import { useLanguage } from "@/contexts/language-context"
-import { Mail, Phone } from "lucide-react"
+import { Mail, Phone, Bug } from "lucide-react"
 
 export function Footer() {
   const { t } = useLanguage()
@@ -28,6 +28,17 @@ export function Footer() {
               +7 708 307 8542
             </a>
           </div>
+        </div>
+        <div className="flex justify-center mt-6">
+          <a
+            href={`https://wa.me/77076691509?text=${encodeURIComponent(t("report_bug_prefill"))}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-border hover:border-primary hover:text-primary transition-colors"
+          >
+            <Bug className="h-4 w-4" />
+            {t("report_bug")}
+          </a>
         </div>
         <p className="text-center text-sm text-muted-foreground mt-4">© 2025 MUN Kazakhstan. {t("contact")}</p>
       </div>
