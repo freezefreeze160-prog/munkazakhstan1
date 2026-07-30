@@ -67,7 +67,8 @@ export default function ApplyToConferencePage() {
   function committeeLabel(c: Committee) {
     if (c.capacity == null) return c.name
     const used = fill[c.id] || 0
-    return `${c.name} (${used}/${c.capacity})`
+    const full = used >= c.capacity
+    return `${c.name} (${used}/${c.capacity})${full ? " — " + t("committee_full") : ""}`
   }
 
   useEffect(() => {
