@@ -15,6 +15,7 @@ import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 import { ConferenceGallery } from "@/components/conference-gallery"
 import { ConferenceCertificate } from "@/components/conference-certificate"
 import { ConferenceSchedule } from "@/components/conference-schedule"
+import { ConferenceReviews } from "@/components/conference-reviews"
 import { formatConfDate } from "@/lib/format-date"
 import { REGIONS } from "@/lib/roles"
 
@@ -469,6 +470,13 @@ export default function ConferenceDetailPage() {
 
               {/* Certificates */}
               <ConferenceCertificate conferenceId={conference.id} userId={userId} isOrganizer={isOrganizer} />
+
+              {/* Reviews — delegates can review after the conference date */}
+              <ConferenceReviews
+                conferenceId={conference.id}
+                userId={userId}
+                canReview={!!userId && daysLeft !== null && daysLeft < 0}
+              />
 
               {/* Payment Details */}
               {(conference.payment_bank || conference.payment_card_number) && (
