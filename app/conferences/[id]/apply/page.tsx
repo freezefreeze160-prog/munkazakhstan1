@@ -36,6 +36,7 @@ interface Committee {
   id: string
   name: string
   topic: string | null
+  capacity: number | null
 }
 
 export default function ApplyToConferencePage() {
@@ -61,6 +62,13 @@ export default function ApplyToConferencePage() {
   })
   const [positionPaper, setPositionPaper] = useState<File | null>(null)
   const [receipt, setReceipt] = useState<File | null>(null)
+  const [fill, setFill] = useState<Record<string, number>>({})
+
+  function committeeLabel(c: Committee) {
+    if (c.capacity == null) return c.name
+    const used = fill[c.id] || 0
+    return `${c.name} (${used}/${c.capacity})`
+  }
 
   useEffect(() => {
     loadConferenceAndUser()
@@ -97,6 +105,16 @@ export default function ApplyToConferencePage() {
 
       if (committeesError) throw committeesError
       setCommittees(committeesData || [])
+
+      // Fill counts per committee (aggregate, no per-row exposure)
+      const { data: fillData } = await supabase.rpc("committee_fill", { p_conf_id: params.id })
+      if (Array.isArray(fillData)) {
+        const map: Record<string, number> = {}
+        for (const row of fillData as { committee_id: string; assigned: number }[]) {
+          map[row.committee_id] = Number(row.assigned)
+        }
+        setFill(map)
+      }
 
       const { data: profileData } = await supabase
         .from("profiles")
@@ -375,7 +393,7 @@ export default function ApplyToConferencePage() {
                         <SelectContent>
                           {committees.map((committee) => (
                             <SelectItem key={committee.id} value={committee.id}>
-                              {committee.name}
+                              {committeeLabel(committee)}
                               {committee.topic && ` - ${committee.topic}`}
                             </SelectItem>
                           ))}
