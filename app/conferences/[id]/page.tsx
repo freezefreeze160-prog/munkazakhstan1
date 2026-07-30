@@ -9,7 +9,7 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText, Bookmark, BookmarkCheck, Pencil } from "lucide-react"
+import { Calendar, MapPin, Clock, ArrowLeft, CreditCard, FileText, Bookmark, BookmarkCheck, Pencil, MessageCircle, Send, Link as LinkIcon } from "lucide-react"
 import { ConferenceDocuments } from "@/components/conference-documents"
 import { PaymentReceiptUpload } from "@/components/payment-receipt-upload"
 import { ConferenceGallery } from "@/components/conference-gallery"
@@ -197,6 +197,30 @@ export default function ConferenceDetailPage() {
       ? REGIONS[Number(conference.city) as keyof typeof REGIONS][language]
       : ""
 
+  const daysLeft = (() => {
+    if (!conference.date_ru || !/^\d{4}-\d{2}-\d{2}/.test(conference.date_ru)) return null
+    const [y, m, d] = conference.date_ru.slice(0, 10).split("-").map(Number)
+    const start = new Date(y, m - 1, d)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return Math.round((start.getTime() - today.getTime()) / 86400000)
+  })()
+
+  function shareTo(target: "whatsapp" | "telegram" | "copy") {
+    const url = window.location.href
+    const text = `${name} — MUN Kazakhstan`
+    if (target === "whatsapp") {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, "_blank")
+    } else if (target === "telegram") {
+      window.open(
+        `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+        "_blank",
+      )
+    } else {
+      navigator.clipboard?.writeText(url).then(() => alert(t("link_copied"))).catch(() => {})
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -282,6 +306,16 @@ export default function ConferenceDetailPage() {
                     {t("registration_closed")}
                   </span>
                 )}
+                {daysLeft !== null && daysLeft > 0 && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-primary/25 text-white border border-primary/40">
+                    {daysLeft} {t("days_left")}
+                  </span>
+                )}
+                {daysLeft === 0 && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-green-500/25 text-green-200 border border-green-500/40">
+                    {t("starts_today")}
+                  </span>
+                )}
               </div>
 
               {/* Meta details */}
@@ -363,6 +397,32 @@ export default function ConferenceDetailPage() {
                     </Link>
                   </Button>
                 )}
+              </div>
+
+              {/* Share */}
+              <div className="flex items-center gap-2 mt-5">
+                <span className="text-sm text-white/60 mr-1">{t("share")}:</span>
+                <button
+                  onClick={() => shareTo("whatsapp")}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors"
+                  aria-label="WhatsApp"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => shareTo("telegram")}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors"
+                  aria-label="Telegram"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => shareTo("copy")}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors"
+                  aria-label={t("copy_link")}
+                >
+                  <LinkIcon className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>

@@ -130,6 +130,17 @@ export default function InboxPage() {
   const [broadcastAudience, setBroadcastAudience] = useState<"approved" | "all">("approved")
   const [sendingBroadcast, setSendingBroadcast] = useState(false)
   const [deputySearch, setDeputySearch] = useState<Record<string, string>>({})
+  const [appFilter, setAppFilter] = useState<Record<string, string>>({})
+
+  async function approveAllPending(conf: ConferenceWithApplications) {
+    const pending = conf.applications.filter((a) => a.status === "pending")
+    if (pending.length === 0) return
+    if (!confirm(`${t("approve_all_confirm")} (${pending.length})`)) return
+    for (const app of pending) {
+      // eslint-disable-next-line no-await-in-loop
+      await updateApplicationStatus(app, conf, "approved")
+    }
+  }
 
   useEffect(() => {
     loadApplications()
@@ -1311,11 +1322,58 @@ export default function InboxPage() {
                         </div>
                       )}
 
+                      {/* Statistics + bulk actions */}
+                      {conf.applications.length > 0 && (
+                        <div className="mb-4 flex flex-wrap items-center gap-2 justify-between">
+                          <div className="flex flex-wrap gap-1.5 text-xs">
+                            <span className="px-2.5 py-1 rounded-md bg-muted">
+                              {t("applications")}: {conf.applications.length}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-md bg-yellow-100 text-yellow-800">
+                              {t("pending")}: {conf.applications.filter((a) => a.status === "pending").length}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-md bg-green-100 text-green-800">
+                              {t("approved")}: {conf.applications.filter((a) => a.status === "approved").length}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-md bg-red-100 text-red-800">
+                              {t("rejected")}: {conf.applications.filter((a) => a.status === "rejected").length}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-800">
+                              {t("payment_confirmed")}: {conf.receipts.filter((r) => r.status === "confirmed").length}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <select
+                              className="text-sm border rounded-md px-2 py-1.5 bg-background"
+                              value={appFilter[conf.id] || "all"}
+                              onChange={(e) => setAppFilter((p) => ({ ...p, [conf.id]: e.target.value }))}
+                            >
+                              <option value="all">{t("all")}</option>
+                              <option value="pending">{t("pending")}</option>
+                              <option value="approved">{t("approved")}</option>
+                              <option value="rejected">{t("rejected")}</option>
+                            </select>
+                            {conf.applications.some((a) => a.status === "pending") && (
+                              <Button size="sm" variant="outline" onClick={() => approveAllPending(conf)}>
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                {t("approve_all")}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {conf.applications.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-8">{t("no_applications")}</p>
                       ) : (
                         <div className="space-y-4">
-                          {conf.applications.map((app) => (
+                          {conf.applications
+                            .filter(
+                              (a) =>
+                                (appFilter[conf.id] || "all") === "all" ||
+                                a.status === appFilter[conf.id],
+                            )
+                            .map((app) => (
                             <Card key={app.id} className="border-2">
                               <CardContent className="p-6">
                                 <div className="space-y-4">
