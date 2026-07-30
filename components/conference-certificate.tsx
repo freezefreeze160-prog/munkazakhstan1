@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { awardLabelKey, type AwardType } from "@/lib/awards"
+import { presidiumPositionKey } from "@/lib/presidium"
 import { Award as AwardIcon, Upload, Download, Save } from "lucide-react"
 
 interface TemplateConfig {
@@ -97,7 +98,7 @@ export function ConferenceCertificate({
       }
 
       if (userId) {
-        const [appRes, awardRes] = await Promise.all([
+        const [appRes, awardRes, presRes] = await Promise.all([
           supabase
             .from("delegate_applications")
             .select("full_name, status")
@@ -110,14 +111,25 @@ export function ConferenceCertificate({
             .eq("conference_id", conferenceId)
             .eq("user_id", userId)
             .maybeSingle(),
+          supabase
+            .from("presidium_applications")
+            .select("full_name, status, position")
+            .eq("conference_id", conferenceId)
+            .eq("user_id", userId)
+            .maybeSingle(),
         ])
         if (appRes.data?.status === "approved") {
+          // Approved delegate — subtitle is their award, or "participant"
           setMyName(appRes.data.full_name || null)
-        }
-        if (awardRes.data?.award_type) {
-          setMySubtitle(t(awardLabelKey(awardRes.data.award_type as AwardType) as never))
-        } else {
-          setMySubtitle(t("participant"))
+          setMySubtitle(
+            awardRes.data?.award_type
+              ? t(awardLabelKey(awardRes.data.award_type as AwardType) as never)
+              : t("participant"),
+          )
+        } else if (presRes.data?.status === "approved") {
+          // Approved presidium/organizer — subtitle is their position
+          setMyName(presRes.data.full_name || null)
+          setMySubtitle(t(presidiumPositionKey(presRes.data.position) as never) || presRes.data.position)
         }
       }
     } catch (err) {
