@@ -1399,6 +1399,17 @@ export default function InboxPage() {
                             <span className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-800">
                               {t("payment_confirmed")}: {conf.receipts.filter((r) => r.status === "confirmed").length}
                             </span>
+                            {conf.applications.filter((a) => a.status === "approved" && !a.assigned_committee_id)
+                              .length > 0 && (
+                              <span className="px-2.5 py-1 rounded-md bg-orange-100 text-orange-800">
+                                {t("waitlist")}:{" "}
+                                {
+                                  conf.applications.filter(
+                                    (a) => a.status === "approved" && !a.assigned_committee_id,
+                                  ).length
+                                }
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <select
