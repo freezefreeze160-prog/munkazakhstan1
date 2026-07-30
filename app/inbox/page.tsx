@@ -306,6 +306,58 @@ export default function InboxPage() {
     URL.revokeObjectURL(url)
   }
 
+  function exportPresidiumExcel(conf: ConferenceWithApplications) {
+    if (!conf.presidium || conf.presidium.length === 0) {
+      alert(t("export_no_data"))
+      return
+    }
+    const committeeName = (id: string | null) => conf.committees.find((c) => c.id === id)?.name || ""
+    const esc = (v: unknown) =>
+      String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+    const headers = ["№", t("full_name"), t("email"), t("phone"), t("presidium_position"), t("committees"), t("status")]
+    const bodyRows = conf.presidium
+      .map((p, i) => {
+        const cells = [
+          String(i + 1),
+          p.full_name,
+          p.email,
+          p.phone,
+          t(presidiumPositionKey(p.position) as never) || p.position,
+          committeeName(p.committee_id),
+          t(p.status as never) || p.status,
+        ]
+        return `<tr>${cells
+          .map(
+            (c, ci) =>
+              `<td style="border:1px solid #cbd5e1;padding:6px 10px;font-size:13px;${
+                ci === 0 ? "text-align:center;color:#64748b;" : ""
+              }mso-number-format:'\\@';">${esc(c)}</td>`,
+          )
+          .join("")}</tr>`
+      })
+      .join("")
+    const headRow = `<tr>${headers
+      .map(
+        (h) =>
+          `<th style="background:#2563eb;color:#ffffff;border:1px solid #1e40af;padding:8px 10px;font-size:13px;font-weight:700;text-align:left;">${esc(h)}</th>`,
+      )
+      .join("")}</tr>`
+    const title = `${getConferenceName(conf)} — ${t("presidium_applications")}`
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body><table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;"><thead>${headRow}</thead><tbody>${bodyRows}</tbody></table></body></html>`
+    const blob = new Blob(["\ufeff" + html], { type: "application/vnd.ms-excel;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `${getConferenceName(conf).replace(/[^a-zA-Z0-9а-яА-Я_-]+/g, "_")}_presidium.xls`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   async function loadEligibleUsers() {
     // Load ALL users so any participant can be made responsible for a conference.
     const { data } = await supabase
@@ -1170,13 +1222,19 @@ export default function InboxPage() {
                       {/* Presidium applications */}
                       {conf.presidium && conf.presidium.length > 0 && (
                         <div className="mb-6 p-4 border rounded-lg">
-                          <h4 className="font-semibold flex items-center gap-2 mb-3">
-                            <UserCheck className="w-4 h-4" />
-                            {t("presidium_applications")}
-                            <span className="text-sm font-normal text-muted-foreground">
-                              ({conf.presidium.length})
-                            </span>
-                          </h4>
+                          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                            <h4 className="font-semibold flex items-center gap-2">
+                              <UserCheck className="w-4 h-4" />
+                              {t("presidium_applications")}
+                              <span className="text-sm font-normal text-muted-foreground">
+                                ({conf.presidium.length})
+                              </span>
+                            </h4>
+                            <Button size="sm" variant="outline" onClick={() => exportPresidiumExcel(conf)}>
+                              <FileSpreadsheet className="w-4 h-4 mr-2" />
+                              {t("export_excel")}
+                            </Button>
+                          </div>
                           <div className="space-y-3">
                             {conf.presidium.map((p) => (
                               <div key={p.id} className="p-3 rounded-lg border bg-background">

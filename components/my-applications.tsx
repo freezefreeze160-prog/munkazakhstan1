@@ -8,8 +8,18 @@ import { useLanguage } from "@/contexts/language-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, FileText, Upload, Trash2, Award, CreditCard, CheckCircle2, Clock, XCircle } from "lucide-react"
+import { Calendar, FileText, Upload, Trash2, Award, CreditCard, CheckCircle2, Clock, XCircle, UserCheck } from "lucide-react"
 import { computeScore, levelFromScore, awardLabelKey, type AwardType, type DelegateLevel } from "@/lib/awards"
+import { presidiumPositionKey } from "@/lib/presidium"
+
+interface PresidiumApp {
+  id: string
+  conference_id: string
+  position: string
+  status: string
+  rejection_reason: string | null
+  user_conferences?: { name_ru: string; name_kk: string; name_en: string } | null
+}
 
 interface Application {
   id: string
@@ -65,6 +75,7 @@ export function MyApplications({ userId }: { userId: string }) {
   const [committees, setCommittees] = useState<Record<string, Committee>>({})
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [awards, setAwards] = useState<AwardRow[]>([])
+  const [presidium, setPresidium] = useState<PresidiumApp[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -83,6 +94,19 @@ export function MyApplications({ userId }: { userId: string }) {
         .order("created_at", { ascending: false })
       const applications = (appData as Application[]) || []
       setApps(applications)
+
+      // Presidium applications (with conference name via join)
+      const { data: presData } = await supabase
+        .from("presidium_applications")
+        .select("id, conference_id, position, status, rejection_reason, user_conferences(name_ru,name_kk,name_en)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+      setPresidium(
+        (presData || []).map((p: Record<string, unknown>) => ({
+          ...(p as unknown as PresidiumApp),
+          user_conferences: Array.isArray(p.user_conferences) ? p.user_conferences[0] : p.user_conferences,
+        })) as PresidiumApp[],
+      )
 
       const confIds = Array.from(new Set(applications.map((a) => a.conference_id)))
       if (confIds.length) {
@@ -396,6 +420,50 @@ export function MyApplications({ userId }: { userId: string }) {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Presidium applications */}
+        {presidium.length > 0 && (
+          <div className="mt-6 pt-6 border-t">
+            <h3 className="font-semibold flex items-center gap-2 mb-3">
+              <UserCheck className="w-4 h-4 text-primary" />
+              {t("presidium_applications")}
+            </h3>
+            <div className="space-y-3">
+              {presidium.map((p) => {
+                const cname = p.user_conferences
+                  ? language === "ru"
+                    ? p.user_conferences.name_ru
+                    : language === "kk"
+                      ? p.user_conferences.name_kk
+                      : p.user_conferences.name_en
+                  : ""
+                return (
+                  <div key={p.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <Link
+                          href={`/conferences/${p.conference_id}`}
+                          className="font-medium hover:text-primary transition-colors"
+                        >
+                          {cname}
+                        </Link>
+                        <p className="text-sm text-primary">
+                          {t(presidiumPositionKey(p.position) as never) || p.position}
+                        </p>
+                      </div>
+                      {statusBadge(p.status)}
+                    </div>
+                    {p.status === "rejected" && p.rejection_reason && (
+                      <p className="text-sm text-red-500/90 bg-red-500/5 border border-red-500/20 rounded-md px-3 py-2 mt-2">
+                        {t("reject_reason_label")}: {p.rejection_reason}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
       </CardContent>
