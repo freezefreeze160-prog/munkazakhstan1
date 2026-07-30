@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Phone, MapPin, Calendar, Mail, Trophy, Medal, Star, Award } from "lucide-react"
+import { Phone, MapPin, Calendar, Mail, Trophy, Medal, Star, Award, Share2 } from "lucide-react"
 import { getRoleBadgeColor, getRoleLabel, regions } from "@/lib/roles"
 import type { UserProfile } from "@/lib/roles"
 import { computeScore, levelFromScore, awardLabelKey, type AwardType, type DelegateLevel } from "@/lib/awards"
@@ -116,7 +116,21 @@ export function UserProfileView({ userId }: { userId: string }) {
               <AvatarFallback className="text-4xl">{profile.full_name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <CardTitle className="text-3xl mb-3">{profile.full_name}</CardTitle>
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="text-3xl mb-3">{profile.full_name}</CardTitle>
+                <button
+                  onClick={() =>
+                    navigator.clipboard
+                      ?.writeText(window.location.href)
+                      .then(() => alert(t("link_copied")))
+                      .catch(() => {})
+                  }
+                  className="text-xs px-3 py-1.5 rounded-full border border-border hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5 flex-shrink-0"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  {t("share")}
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge className={getRoleBadgeColor(profile.role)}>{getRoleLabel(profile.role, language)}</Badge>
                 {stats && stats.conferences > 0 && (
